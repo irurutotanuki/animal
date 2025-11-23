@@ -36,25 +36,13 @@
             animation: float-up 1s forwards ease-out;
         }
 
-        /* Scrollbar Styling */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #111827; }
-        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
         
-        /* Mobile Optimization */
-        body { 
-            -webkit-user-select: none; 
-            user-select: none; 
-            -webkit-tap-highlight-color: transparent;
-            overscroll-behavior-y: none; /* Prevent pull-to-refresh */
-        }
-        
-        /* Smooth Scrolling for iOS */
-        .scroll-container {
-            -webkit-overflow-scrolling: touch;
-            overscroll-behavior: contain;
-        }
+        /* Disable text selection & tap highlight */
+        body { -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
         
         /* Safe area for mobile scrolling */
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
@@ -86,18 +74,21 @@
             X: (p) => <IconBase {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></IconBase>,
             Scissors: (p) => <IconBase {...p}><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" x2="8.12" y1="4" y2="15.88"/><line x1="14.47" x2="20" y1="14.48" y2="20"/><line x1="8.12" x2="12" y1="8.12" y2="12"/></IconBase>,
             Swords: (p) => <IconBase {...p}><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/><line x1="19" x2="21" y1="21" y2="19"/></IconBase>,
-            CheckCircle: (p) => <IconBase {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></IconBase>
+            CheckCircle: (p) => <IconBase {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></IconBase>,
+            ChevronLeft: (p) => <IconBase {...p}><path d="m15 18-6-6 6-6"/></IconBase>,
+            ChevronRight: (p) => <IconBase {...p}><path d="m9 18 6-6-6-6"/></IconBase>
         };
 
         // --- DATA ---
 
+        // HARDER RATES CONFIG (Total 1.0)
         const RARITY_CONFIG = {
-            GOD: { color: 'from-indigo-900 via-purple-900 to-pink-900', border: 'border-yellow-400', text: 'text-yellow-300', probability: 0.005, powerBase: 9500, hpBase: 33000, cost: 10, sell: 5000, buy: 20000 },
-            LEGEND: { color: 'from-yellow-700 to-yellow-900', border: 'border-yellow-500', text: 'text-yellow-400', probability: 0.025, powerBase: 8000, hpBase: 28000, cost: 8, sell: 2000, buy: 8000 },
-            ULTIMATE: { color: 'from-red-800 to-red-950', border: 'border-red-500', text: 'text-red-400', probability: 0.07, powerBase: 6500, hpBase: 22000, cost: 6, sell: 800, buy: 3000 },
-            EPIC: { color: 'from-purple-800 to-indigo-900', border: 'border-purple-400', text: 'text-purple-300', probability: 0.15, powerBase: 4500, hpBase: 15000, cost: 5, sell: 300, buy: 1200 },
-            RARE: { color: 'from-blue-700 to-blue-900', border: 'border-blue-400', text: 'text-blue-300', probability: 0.30, powerBase: 2500, hpBase: 8500, cost: 3, sell: 100, buy: 400 },
-            COMMON: { color: 'from-slate-600 to-slate-800', border: 'border-slate-400', text: 'text-slate-300', probability: 0.45, powerBase: 1000, hpBase: 3500, cost: 1, sell: 10, buy: 50 }
+            GOD: { color: 'from-indigo-900 via-purple-900 to-pink-900', border: 'border-yellow-400', text: 'text-yellow-300', probability: 0.001, powerBase: 9500, hpBase: 33000, cost: 10, sell: 5000, buy: 20000 }, // 0.1%
+            LEGEND: { color: 'from-yellow-700 to-yellow-900', border: 'border-yellow-500', text: 'text-yellow-400', probability: 0.009, powerBase: 8000, hpBase: 28000, cost: 8, sell: 2000, buy: 8000 }, // 0.9%
+            ULTIMATE: { color: 'from-red-800 to-red-950', border: 'border-red-500', text: 'text-red-400', probability: 0.04, powerBase: 6500, hpBase: 22000, cost: 6, sell: 800, buy: 3000 }, // 4%
+            EPIC: { color: 'from-purple-800 to-indigo-900', border: 'border-purple-400', text: 'text-purple-300', probability: 0.10, powerBase: 4500, hpBase: 15000, cost: 5, sell: 300, buy: 1200 }, // 10%
+            RARE: { color: 'from-blue-700 to-blue-900', border: 'border-blue-400', text: 'text-blue-300', probability: 0.25, powerBase: 2500, hpBase: 8500, cost: 3, sell: 100, buy: 400 }, // 25%
+            COMMON: { color: 'from-slate-600 to-slate-800', border: 'border-slate-400', text: 'text-slate-300', probability: 0.60, powerBase: 1000, hpBase: 3500, cost: 1, sell: 10, buy: 50 } // 60%
         };
 
         // Full Emoji Mapping
@@ -194,7 +185,7 @@
 
             if (isHidden) {
                 return (
-                    <div className={`relative rounded-xl bg-gray-900 border-2 border-gray-700 flex flex-col items-center justify-center ${size === "small" ? "w-24 h-32 text-xs" : "w-48 h-64 text-xl"} shadow-xl overflow-hidden ${className}`}>
+                    <div className={`relative rounded-xl bg-gray-900 border-2 border-gray-700 flex flex-col items-center justify-center ${size === "small" ? "w-24 h-32 text-xs" : "w-40 h-56 text-xl"} shadow-xl overflow-hidden ${className}`}>
                         <div className="text-gray-700 font-bold">?</div>
                         <div className="text-gray-600 text-[10px] mt-1">UNKNOWN</div>
                     </div>
@@ -205,9 +196,9 @@
             const isHolo = card.rarity === 'GOD' || card.rarity === 'LEGEND';
             const glowClass = isHolo ? "animate-pulse ring-2 ring-yellow-400/50" : "";
             const bgGradient = `bg-gradient-to-br ${config.color}`;
-            const dimClass = size === "small" ? "w-24 h-32 text-[10px]" : "w-48 h-64";
-            const titleSize = size === "small" ? "text-[10px]" : "text-sm";
-            const emojiSize = size === "small" ? "text-4xl" : "text-7xl";
+            const dimClass = size === "small" ? "w-24 h-32 text-[10px]" : "w-40 h-56";
+            const titleSize = size === "small" ? "text-[10px]" : "text-xs";
+            const emojiSize = size === "small" ? "text-4xl" : "text-6xl";
             const emoji = useMemo(() => getEmoji(card.name), [card.name]);
 
             return (
@@ -236,8 +227,8 @@
                             </h3>
                             {showPower && (
                                 <div className="flex justify-between gap-1 text-[9px] font-mono text-white bg-black/60 rounded px-1 py-0.5 backdrop-blur-sm border border-white/10">
-                                    <span className="text-green-400">HP {displayHp}</span>
-                                    <span className="text-red-400">ATK {displayPower}</span>
+                                    <span className="text-green-400">H{displayHp}</span>
+                                    <span className="text-red-400">A{displayPower}</span>
                                 </div>
                             )}
                         </div>
@@ -262,6 +253,19 @@
             };
             return (
                 <button onClick={onClick} disabled={disabled} className={`${baseStyle} ${sizeStyles} ${variants[variant]} ${className}`}>{children}</button>
+            );
+        };
+
+        // --- PAGINATION UTILS ---
+        
+        const PaginationControls = ({ page, totalPages, onPrev, onNext }) => {
+            if (totalPages <= 1) return null;
+            return (
+                <div className="flex items-center justify-center gap-4 mt-4 bg-gray-900/80 p-2 rounded-full backdrop-blur-sm">
+                    <Button onClick={onPrev} disabled={page === 0} size="small" variant="secondary"><Icons.ChevronLeft size={16}/></Button>
+                    <span className="font-mono text-sm">{page + 1} / {totalPages}</span>
+                    <Button onClick={onNext} disabled={page >= totalPages - 1} size="small" variant="secondary"><Icons.ChevronRight size={16}/></Button>
+                </div>
             );
         };
 
@@ -370,12 +374,17 @@
             const [missionProgress, setMissionProgress] = useState({});
             const [claimedMissions, setClaimedMissions] = useState([]);
             const [showMissions, setShowMissions] = useState(false);
-            const [marketTab, setMarketTab] = useState('SHOP');
             const [shopItems, setShopItems] = useState([]);
-            const [auctionItems, setAuctionItems] = useState([]);
+            
+            // Pagination State
+            const [collectionPage, setCollectionPage] = useState(0);
+            const [packResultPage, setPackResultPage] = useState(0);
+            
+            const ITEMS_PER_PAGE_COLLECTION = 10; 
+            const ITEMS_PER_PAGE_GACHA = 5;
 
             useEffect(() => {
-                const saved = localStorage.getItem('animalChronicleData_v10');
+                const saved = localStorage.getItem('animalChronicleData_v13'); // Version up
                 let lastLoginDate = "";
                 if (saved) {
                     const parsed = JSON.parse(saved);
@@ -397,7 +406,7 @@
 
             useEffect(() => {
                 const today = new Date().toLocaleDateString('ja-JP');
-                localStorage.setItem('animalChronicleData_v10', JSON.stringify({
+                localStorage.setItem('animalChronicleData_v13', JSON.stringify({
                     coins, collection, cardLevels, lastFreePackClaim, lastDailyReset, activeMissions, missionProgress, claimedMissions, lastLoginDate: today
                 }));
             }, [coins, collection, cardLevels, lastFreePackClaim, lastDailyReset, activeMissions, missionProgress, claimedMissions]);
@@ -419,28 +428,6 @@
                         const s = Math.floor((msLeft % (1000 * 60)) / 1000);
                         setTimeUntilFreePack(`${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`);
                     }
-                    setAuctionItems(prev => prev.map(item => {
-                        if (item.endTime <= now) return item;
-                        const timeLeft = (item.endTime - now) / 1000;
-                        const rivalBidChance = item.lastBidder === 'YOU' ? 0.3 : 0.05; 
-                        if (Math.random() < rivalBidChance && timeLeft > 0) {
-                            const raise = Math.floor(Math.random() * 500) + 100;
-                            // NPC will not bid if currentBid >= buyoutPrice (which is approx 2x startPrice)
-                            if (item.currentBid < item.buyoutPrice) {
-                                const newBid = item.currentBid + raise;
-                                // If NPC bids and exceeds buyout, they take it instantly? Or just bid high.
-                                // Simpler: NPC bids normally.
-                                // But we check for buyout later.
-                                return { ...item, currentBid: newBid, lastBidder: 'Rival' };
-                            }
-                        }
-                        // Check Buyout Condition for NPC or Time
-                        if (item.currentBid >= item.buyoutPrice && item.endTime > now) {
-                             // Force end if price gets too high (Immediate Buyout Logic)
-                             return { ...item, endTime: now };
-                        }
-                        return item;
-                    }));
                     checkDailyReset(lastDailyReset);
                 }, 1000);
                 return () => clearInterval(interval);
@@ -493,14 +480,6 @@
                 for (let i = 0; i < 4; i++) items.push(getRandomCard());
                 setShopItems(items);
             };
-            const createAuction = () => {
-                const active = auctionItems.filter(i => i.endTime > Date.now()).length;
-                if (active >= 2) return;
-                let card;
-                do { card = getRandomCard(); } while (['COMMON', 'RARE'].includes(card.rarity));
-                const startPrice = Math.floor(RARITY_CONFIG[card.rarity].sell * 1.5);
-                setAuctionItems(prev => [...prev, { id: Date.now() + Math.random(), card: card, currentBid: startPrice, endTime: Date.now() + 60000, lastBidder: 'System' }]);
-            };
 
             const openPack = (count = 1, isFree = false) => {
                 if (isFree) {
@@ -521,6 +500,7 @@
                     newCards.push(picked);
                 }
                 setPendingPackCards(newCards);
+                setPackResultPage(0);
                 setPackState('SHOW_PACK');
             };
             const finishPackOpening = () => {
@@ -554,22 +534,6 @@
                 setCoins(prev => prev - price);
                 setCollection(prev => ({ ...prev, [card.id]: (prev[card.id] || 0) + 1 }));
                 setShopItems(prev => prev.filter(c => c.id !== card.id));
-            };
-            const placeBid = (auctionId, currentBid) => {
-                const bidAmount = currentBid + 100;
-                if (coins < bidAmount) { alert("入札するお金が足りません"); return; }
-                setAuctionItems(prev => prev.map(item => {
-                    if (item.id === auctionId) { return { ...item, currentBid: bidAmount, lastBidder: 'YOU', endTime: item.endTime + 5000 }; }
-                    return item;
-                }));
-            };
-            const claimAuction = (item) => {
-                if (item.lastBidder !== 'YOU') { setAuctionItems(prev => prev.filter(i => i.id !== item.id)); return; }
-                if (coins < item.currentBid) { alert("資金不足で権利失効です。"); setAuctionItems(prev => prev.filter(i => i.id !== item.id)); return; }
-                setCoins(prev => prev - item.currentBid);
-                setCollection(prev => ({ ...prev, [item.card.id]: (prev[item.card.id] || 0) + 1 }));
-                setAuctionItems(prev => prev.filter(i => i.id !== item.id));
-                alert(`${item.card.name} を入手しました！`);
             };
 
             const toggleDeckCard = (card) => {
@@ -656,7 +620,7 @@
                 const myIds = Object.keys(collection).filter(id => collection[id] > 0);
                 const ownedCards = ALL_CARDS.filter(c => myIds.includes(String(c.id))).sort((a,b) => b.power - a.power);
                 return (
-                    <div className="flex flex-col h-full animate-in fade-in scroll-container">
+                    <div className="flex flex-col h-full animate-in fade-in">
                         <div className="flex justify-between items-center mb-4 shrink-0">
                             <Button onClick={() => setView('HOME')} variant="secondary" size="small"><Icons.RotateCcw size={16}/> 戻る</Button>
                             <h2 className="text-xl font-bold text-white">デッキ編成 (3体)</h2>
@@ -674,7 +638,7 @@
                             ))}
                         </div>
                         <div className="flex justify-center mb-4"><Button onClick={confirmDeckAndStart} variant="danger" disabled={selectedDeck.length !== 3} className="px-12 py-3 text-xl shadow-lg w-full max-w-sm">バトル開始！</Button></div>
-                        <div className="flex-1 overflow-y-auto pb-32 scroll-container"><div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">{ownedCards.map(card => { const isSelected = selectedDeck.some(c => c.id === card.id); return (<div key={card.id} className="relative"><Card card={card} size="small" onClick={() => toggleDeckCard(card)} isSelected={isSelected} level={cardLevels[card.id] || 0} /><div className="absolute top-0 right-0 bg-blue-600 text-[10px] px-1 rounded-bl">x{collection[card.id]}</div></div>); })}</div></div>
+                        <div className="flex-1 overflow-y-auto pb-20 scroll-container"><div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">{ownedCards.map(card => { const isSelected = selectedDeck.some(c => c.id === card.id); return (<div key={card.id} className="relative"><Card card={card} size="small" onClick={() => toggleDeckCard(card)} isSelected={isSelected} level={cardLevels[card.id] || 0} /><div className="absolute top-0 right-0 bg-blue-600 text-[10px] px-1 rounded-bl">x{collection[card.id]}</div></div>); })}</div></div>
                     </div>
                 );
             };
@@ -730,15 +694,21 @@
                     if (aOwned !== bOwned) return bOwned - aOwned;
                     return a.id - b.id;
                 });
+                
+                // PAGINATION LOGIC
+                const totalPages = Math.ceil(sortedCards.length / ITEMS_PER_PAGE_COLLECTION);
+                const paginatedCards = sortedCards.slice(collectionPage * ITEMS_PER_PAGE_COLLECTION, (collectionPage + 1) * ITEMS_PER_PAGE_COLLECTION);
+
                 return (
                     <div className="h-full flex flex-col relative">
                         <div className="flex justify-between items-center mb-4 shrink-0">
-                            <Button onClick={() => setView('HOME')} variant="secondary" size="small"><Icons.RotateCcw size={16} /> 戻る</Button>
+                            <Button onClick={() => { setView('HOME'); setCollectionPage(0); }} variant="secondary" size="small"><Icons.RotateCcw size={16} /> 戻る</Button>
                             <div className="text-right text-xs text-gray-400">詳細・覚醒</div>
                         </div>
-                        <div className="flex-1 overflow-y-auto pb-32 scroll-container">
-                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-                                {sortedCards.map(card => {
+                        
+                        <div className="flex-1 overflow-y-auto pb-10">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                                {paginatedCards.map(card => {
                                     const count = collection[card.id] || 0;
                                     return (
                                         <div key={card.id} className="relative group">
@@ -748,6 +718,15 @@
                                     );
                                 })}
                             </div>
+                        </div>
+                        
+                        <div className="shrink-0 pb-20">
+                            <PaginationControls 
+                                page={collectionPage} 
+                                totalPages={totalPages} 
+                                onPrev={() => setCollectionPage(p => Math.max(0, p - 1))}
+                                onNext={() => setCollectionPage(p => Math.min(totalPages - 1, p + 1))}
+                            />
                         </div>
                     </div>
                 );
@@ -762,7 +741,7 @@
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-lg px-4">
                         <Button onClick={() => setView('GACHA')} variant="gold" className="py-4 text-lg flex-col"><div className="flex items-center gap-2"><Icons.Sparkles /> スカウト</div></Button>
                         <Button onClick={() => { setView('DECK_SELECT'); setSelectedDeck([]); }} variant="danger" className="py-4 text-lg flex-col"><div className="flex items-center gap-2"><Icons.Zap /> バトル</div></Button>
-                        <Button onClick={() => { setView('MARKET'); refreshShop(); createAuction(); updateMission('VISIT_MARKET'); }} variant="green" className="py-4 text-lg flex-col"><div className="flex items-center gap-2"><Icons.ShoppingBag /> マーケット</div></Button>
+                        <Button onClick={() => { setView('MARKET'); refreshShop(); updateMission('VISIT_MARKET'); }} variant="green" className="py-4 text-lg flex-col"><div className="flex items-center gap-2"><Icons.ShoppingBag /> マーケット</div></Button>
                         <Button onClick={() => setView('COLLECTION')} variant="primary" className="py-4 text-lg flex-col"><div className="flex items-center gap-2"><Icons.Search /> コレクション</div></Button>
                     </div>
                 </div>
@@ -770,15 +749,43 @@
 
             const renderGacha = () => (
                 <div className="flex flex-col items-center h-full relative">
-                    <div className="w-full flex justify-between items-center mb-6"><Button onClick={() => { setView('HOME'); setPackResult(null); setPackState('IDLE'); }} variant="secondary" size="small"><Icons.RotateCcw size={16} /> 戻る</Button><div className="bg-gray-800 px-4 py-2 rounded-full border border-yellow-600 text-yellow-400 font-bold">{coins} G</div></div>
+                    <div className="w-full flex justify-between items-center mb-6"><Button onClick={() => { setView('HOME'); setPendingPackCards(null); setPackState('IDLE'); setPackResultPage(0); }} variant="secondary" size="small"><Icons.RotateCcw size={16} /> 戻る</Button><div className="bg-gray-800 px-4 py-2 rounded-full border border-yellow-600 text-yellow-400 font-bold">{coins} G</div></div>
                     {packState === 'IDLE' && <div className="flex-1 flex flex-col items-center justify-center space-y-8 w-full max-w-md animate-in fade-in"><Button onClick={() => openPack(1, true)} variant="primary" className="w-full mt-2 z-10" disabled={freePackProgress < 100}>{freePackProgress >= 100 ? "✨ 無料で開封！ ✨" : `チャージ中...`}</Button><div className="flex flex-col gap-2 w-full"><Button onClick={() => openPack(1)} variant="gold" disabled={coins < 500} className="w-full py-4 justify-between text-lg"><span>1パック (5枚)</span><span>500 G</span></Button><Button onClick={() => openPack(10)} variant="gold" disabled={coins < 5000} className="w-full py-4 justify-between border border-white/20 text-lg"><span>10パック (50枚)</span><span>5,000 G</span></Button></div></div>}
                     {packState === 'SHOW_PACK' && <PackOpener onOpen={finishPackOpening} />}
-                    {packState === 'SHOW_RESULTS' && pendingPackCards && <div className="flex-1 flex flex-col items-center w-full overflow-hidden"><div className="flex-1 overflow-y-auto w-full px-4 pb-32 scroll-container"><div className="flex flex-wrap justify-center gap-3">{pendingPackCards.map((card, idx) => (<div key={idx} className="animate-in zoom-in duration-300" style={{animationDelay: `${idx * 100}ms`}}><Card card={card} isNew={collection[card.id] === 1} size="small" /></div>))}</div></div><div className="mt-4 pb-safe flex gap-4 shrink-0"><Button onClick={() => { setPackState('IDLE'); setPendingPackCards(null); }} variant="secondary">閉じる</Button></div></div>}
+                    {packState === 'SHOW_RESULTS' && pendingPackCards && (() => {
+                        // PAGINATION FOR GACHA RESULTS
+                        const totalPages = Math.ceil(pendingPackCards.length / ITEMS_PER_PAGE_GACHA);
+                        const paginatedResults = pendingPackCards.slice(packResultPage * ITEMS_PER_PAGE_GACHA, (packResultPage + 1) * ITEMS_PER_PAGE_GACHA);
+                        
+                        return (
+                            <div className="flex-1 flex flex-col items-center w-full overflow-hidden">
+                                <h2 className="text-2xl font-black text-white mb-2 italic">OPEN!</h2>
+                                <div className="flex-1 w-full px-4 flex flex-col items-center">
+                                    <div className="flex flex-wrap justify-center gap-3 mb-4">
+                                        {paginatedResults.map((card, idx) => (
+                                            <div key={idx} className="animate-in zoom-in duration-300" style={{animationDelay: `${idx * 100}ms`}}>
+                                                <Card card={card} isNew={collection[card.id] === 1} size="small" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <PaginationControls 
+                                        page={packResultPage} 
+                                        totalPages={totalPages} 
+                                        onPrev={() => setPackResultPage(p => Math.max(0, p - 1))}
+                                        onNext={() => setPackResultPage(p => Math.min(totalPages - 1, p + 1))}
+                                    />
+                                </div>
+                                <div className="mt-4 pb-safe flex gap-4 shrink-0 mb-20">
+                                    <Button onClick={() => { setPackState('IDLE'); setPendingPackCards(null); setPackResultPage(0); }} variant="secondary">閉じる</Button>
+                                </div>
+                            </div>
+                        );
+                    })()}
                 </div>
             );
 
             const renderMarket = () => (
-                <div className="h-full flex flex-col"><div className="flex justify-between items-center mb-4 shrink-0"><Button onClick={() => setView('HOME')} variant="secondary" size="small"><Icons.RotateCcw size={16} /> 戻る</Button><div className="bg-gray-800 px-4 py-1 rounded-full border border-yellow-600 text-yellow-400 font-bold flex items-center gap-2"><Icons.Coins size={16} /> {coins} G</div></div><div className="flex gap-2 mb-4 bg-gray-800 p-1 rounded-lg shrink-0"><button onClick={() => setMarketTab('SHOP')} className={`flex-1 py-2 rounded font-bold transition-colors ${marketTab === 'SHOP' ? 'bg-emerald-600 text-white' : 'text-gray-400 hover:bg-gray-700'}`}>ショップ</button><button onClick={() => setMarketTab('AUCTION')} className={`flex-1 py-2 rounded font-bold transition-colors ${marketTab === 'AUCTION' ? 'bg-orange-600 text-white' : 'text-gray-400 hover:bg-gray-700'}`}>オークション</button></div><div className="flex-1 overflow-y-auto pb-32 scroll-container">{marketTab === 'SHOP' && <div className="grid grid-cols-2 md:grid-cols-3 gap-4">{shopItems.map(card => (<div key={card.id} className="flex flex-col gap-2"><Card card={card} size="small" className="mx-auto" /><Button onClick={() => buyShopItem(card)} variant="secondary" className="text-sm py-1">購入 {RARITY_CONFIG[card.rarity].buy} G</Button></div>))}</div>}{marketTab === 'AUCTION' && <div className="space-y-4"><div className="flex justify-end"><Button onClick={createAuction} variant="primary" className="text-xs">探索</Button></div>{auctionItems.map(item => (<div key={item.id} className="bg-gray-800 p-4 rounded-lg border border-gray-600 flex gap-4 items-center"><Card card={item.card} size="small" /><div className="flex-1 min-w-0"><h3 className="font-bold truncate">{item.card.name}</h3><div className="text-yellow-400 font-bold">{item.currentBid} G</div>{item.endTime <= Date.now() ? (item.lastBidder === 'YOU' ? <Button onClick={() => claimAuction(item)} variant="green">受取</Button> : <div>終了</div>) : <Button onClick={() => placeBid(item.id, item.currentBid)} variant="gold">入札</Button>}</div></div>))}</div>}</div></div>
+                <div className="h-full flex flex-col"><div className="flex justify-between items-center mb-4 shrink-0"><Button onClick={() => setView('HOME')} variant="secondary" size="small"><Icons.RotateCcw size={16} /> 戻る</Button><div className="bg-gray-800 px-4 py-1 rounded-full border border-yellow-600 text-yellow-400 font-bold flex items-center gap-2"><Icons.Coins size={16} /> {coins} G</div></div><div className="flex gap-2 mb-4 bg-gray-800 p-1 rounded-lg shrink-0"><button onClick={() => setMarketTab('SHOP')} className={`flex-1 py-2 rounded font-bold transition-colors ${marketTab === 'SHOP' ? 'bg-emerald-600 text-white' : 'text-gray-400 hover:bg-gray-700'}`}>日替わりショップ</button></div><div className="flex-1 overflow-y-auto pb-24 scroll-container">{marketTab === 'SHOP' && <div className="grid grid-cols-2 md:grid-cols-3 gap-4">{shopItems.map(card => (<div key={card.id} className="flex flex-col gap-2"><Card card={card} size="small" className="mx-auto" /><Button onClick={() => buyShopItem(card)} variant="secondary" className="text-sm py-1">購入 {RARITY_CONFIG[card.rarity].buy} G</Button></div>))}</div>}</div></div>
             );
 
             return (
