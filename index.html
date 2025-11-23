@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>アニマル・クロニクル</title>
     <!-- React & ReactDOM -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
@@ -12,6 +12,7 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Animations */
         @keyframes shimmer {
             0% { transform: translateX(-150%) skewX(-15deg); }
             100% { transform: translateX(150%) skewX(-15deg); }
@@ -19,27 +20,14 @@
         .animate-spin-slow {
             animation: spin 8s linear infinite;
         }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        @keyframes tear-open {
-            0% { transform: translateX(0) rotate(0deg); opacity: 1; }
-            100% { transform: translateX(150px) rotate(20deg); opacity: 0; }
-        }
-        .animate-tear {
-            animation: tear-open 0.5s forwards ease-out;
-        }
-        /* Damage Shake Animation */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px) rotate(-5deg); }
-            75% { transform: translateX(10px) rotate(5deg); }
+            25% { transform: translateX(-5px) rotate(-5deg); }
+            75% { transform: translateX(5px) rotate(5deg); }
         }
         .animate-shake {
             animation: shake 0.3s ease-in-out;
         }
-        /* Floating Damage Text */
         @keyframes float-up {
             0% { transform: translateY(0) scale(1); opacity: 1; }
             100% { transform: translateY(-50px) scale(1.5); opacity: 0; }
@@ -48,57 +36,60 @@
             animation: float-up 1s forwards ease-out;
         }
 
-        /* Hide scrollbar for clean UI */
-        ::-webkit-scrollbar {
-            width: 8px;
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #111827; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        
+        /* Mobile Optimization */
+        body { 
+            -webkit-user-select: none; 
+            user-select: none; 
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: none; /* Prevent pull-to-refresh */
         }
-        ::-webkit-scrollbar-track {
-            background: #1f2937; 
+        
+        /* Smooth Scrolling for iOS */
+        .scroll-container {
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #4b5563; 
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #6b7280; 
-        }
-        .cut-line {
-            background-image: linear-gradient(90deg, transparent 50%, rgba(255,255,255,0.5) 50%);
-            background-size: 20px 100%;
-        }
+        
+        /* Safe area for mobile scrolling */
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
     </style>
 </head>
-<body class="bg-gray-900 text-white h-screen overflow-hidden select-none">
+<body class="bg-gray-950 text-white h-[100dvh] w-screen overflow-hidden">
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+        const { useState, useEffect, useRef, useMemo } = React;
 
-        // --- ICON COMPONENTS ---
+        // --- ICONS (Lucide) ---
         const IconBase = ({ children, className, size = 24, ...props }) => (
             <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>{children}</svg>
         );
-        const Sparkles = (props) => <IconBase {...props}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M9 3v4"/><path d="M3 9h4"/><path d="M3 5h4"/></IconBase>;
-        const Trophy = (props) => <IconBase {...props}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></IconBase>;
-        const Skull = (props) => <IconBase {...props}><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><path d="M8 20v2h8v-2"/><path d="m12.5 17-.5-1-.5 1h1z"/><path d="M16 20a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20"/></IconBase>;
-        const Zap = (props) => <IconBase {...props}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></IconBase>;
-        const Search = (props) => <IconBase {...props}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></IconBase>;
-        const RotateCcw = (props) => <IconBase {...props}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></IconBase>;
-        const Gift = (props) => <IconBase {...props}><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></IconBase>;
-        const ShoppingBag = (props) => <IconBase {...props}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></IconBase>;
-        const Gavel = (props) => <IconBase {...props}><path d="m14 13-7.5 7.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L11 10"/><path d="m16 16 6-6"/><path d="m8 8 6-6"/><path d="m9 7 8 8"/><path d="m21 11-8-8"/></IconBase>;
-        const Coins = (props) => <IconBase {...props}><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m7.1 10 .9.26L9 10"/></IconBase>;
-        const Clock = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></IconBase>;
-        const CheckCircle = (props) => <IconBase {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></IconBase>;
-        const Timer = (props) => <IconBase {...props}><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></IconBase>;
-        const Calendar = (props) => <IconBase {...props}><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></IconBase>;
-        const X = (props) => <IconBase {...props}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></IconBase>;
-        const Scissors = (props) => <IconBase {...props}><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" x2="8.12" y1="4" y2="15.88"/><line x1="14.47" x2="20" y1="14.48" y2="20"/><line x1="8.12" x2="12" y1="8.12" y2="12"/></IconBase>;
-        const Heart = (props) => <IconBase {...props}><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></IconBase>;
-        const Swords = (props) => <IconBase {...props}><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/><line x1="19" x2="21" y1="21" y2="19"/></IconBase>;
-        const ArrowUpCircle = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4"/><path d="M12 16V8"/></IconBase>;
+        const Icons = {
+            Sparkles: (p) => <IconBase {...p}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M9 3v4"/><path d="M3 9h4"/><path d="M3 5h4"/></IconBase>,
+            Trophy: (p) => <IconBase {...p}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></IconBase>,
+            Skull: (p) => <IconBase {...p}><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><path d="M8 20v2h8v-2"/><path d="m12.5 17-.5-1-.5 1h1z"/><path d="M16 20a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20"/></IconBase>,
+            Zap: (p) => <IconBase {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></IconBase>,
+            Search: (p) => <IconBase {...p}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></IconBase>,
+            RotateCcw: (p) => <IconBase {...p}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></IconBase>,
+            Gift: (p) => <IconBase {...p}><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></IconBase>,
+            ShoppingBag: (p) => <IconBase {...p}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></IconBase>,
+            Gavel: (p) => <IconBase {...p}><path d="m14 13-7.5 7.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L11 10"/><path d="m16 16 6-6"/><path d="m8 8 6-6"/><path d="m9 7 8 8"/><path d="m21 11-8-8"/></IconBase>,
+            Coins: (p) => <IconBase {...p}><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m7.1 10 .9.26L9 10"/></IconBase>,
+            Timer: (p) => <IconBase {...p}><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></IconBase>,
+            Calendar: (p) => <IconBase {...p}><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></IconBase>,
+            X: (p) => <IconBase {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></IconBase>,
+            Scissors: (p) => <IconBase {...p}><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" x2="8.12" y1="4" y2="15.88"/><line x1="14.47" x2="20" y1="14.48" y2="20"/><line x1="8.12" x2="12" y1="8.12" y2="12"/></IconBase>,
+            Swords: (p) => <IconBase {...p}><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/><line x1="19" x2="21" y1="21" y2="19"/></IconBase>,
+            CheckCircle: (p) => <IconBase {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></IconBase>
+        };
 
-        // --- DATA DEFINITIONS ---
+        // --- DATA ---
 
         const RARITY_CONFIG = {
             GOD: { color: 'from-indigo-900 via-purple-900 to-pink-900', border: 'border-yellow-400', text: 'text-yellow-300', probability: 0.005, powerBase: 9500, hpBase: 33000, cost: 10, sell: 5000, buy: 20000 },
@@ -107,6 +98,53 @@
             EPIC: { color: 'from-purple-800 to-indigo-900', border: 'border-purple-400', text: 'text-purple-300', probability: 0.15, powerBase: 4500, hpBase: 15000, cost: 5, sell: 300, buy: 1200 },
             RARE: { color: 'from-blue-700 to-blue-900', border: 'border-blue-400', text: 'text-blue-300', probability: 0.30, powerBase: 2500, hpBase: 8500, cost: 3, sell: 100, buy: 400 },
             COMMON: { color: 'from-slate-600 to-slate-800', border: 'border-slate-400', text: 'text-slate-300', probability: 0.45, powerBase: 1000, hpBase: 3500, cost: 1, sell: 10, buy: 50 }
+        };
+
+        // Full Emoji Mapping
+        const ANIMAL_EMOJIS = {
+            "ライオン": "🦁", "ドラゴン": "🐉", "クジラ": "🐋", "フェニックス": "🦅", "クラーケン": "🦑",
+            "グリフォン": "🦅", "ティラノサウルス": "🦖", "マンモス": "🦣", "サラマンダー": "🦎", "ペガサス": "🦄",
+            "ヒドラ": "🐍", "狐": "🦊", "スフィンクス": "🗿", "ゴリラ": "🦍", "サメ": "🦈",
+            "ペンギン": "🐧", "サイ": "🦏", "カマキリ": "🦗", "スコーピオン": "🦂", "ハヤブサ": "🦅",
+            "アナコンダ": "🐍", "タイガー": "🐯", "ベア": "🐻", "クロコダイル": "🐊", "イール": "🐟",
+            "フロッグ": "🐸", "カブトムシ": "🪲", "イーグル": "🦅", "ムササビ": "🐿️", "カメレオン": "🦎",
+            "アルマジロ": "🦔", "コウモリ": "🦇", "オオカミ": "🐺", "ゾウ": "🐘", "チーター": "🐆",
+            "ヒョウ": "🐆", "ジャガー": "🐆", "カバ": "🦛", "キリン": "🦒", "バッファロー": "🐃",
+            "イノシシ": "🐗", "カンガルー": "🦘", "トカゲ": "🦎", "ワニ": "🐊", "ヘビ": "🐍",
+            "コブラ": "🐍", "ワシ": "🦅", "コンドル": "🦅", "フクロウ": "🦉", "ダチョウ": "🐦",
+            "シャチ": "🐬", "イカ": "🦑", "エイ": "🐟", "ピラニア": "🐟", "スズメバチ": "🐝",
+            "クワガタ": "🪲", "トンボ": "🪁", "クモ": "🕷️", "ムカデ": "🐛", "パンダ": "🐼",
+            "サル": "🐒", "オランウータン": "🦧", "ハムスター": "🐹", "ネズミ": "🐭", "リス": "🐿️",
+            "ウサギ": "🐰", "ネコ": "🐱", "イヌ": "🐶", "ウマ": "🐴", "ウシ": "🐮", "ブタ": "🐷",
+            "ヒツジ": "🐑", "ヤギ": "🐐", "トリ": "🐔", "ニワトリ": "🐔", "ヒヨコ": "🐥",
+            "カモ": "🦆", "ツル": "🦢", "ハト": "🕊️", "カラス": "🐦‍⬛", "インコ": "🦜", "オウム": "🦜",
+            "カエル": "🐸", "カメ": "🐢", "サカナ": "🐟", "タコ": "🐙", "エビ": "🦐", "カニ": "🦀",
+            "貝": "🐚", "虫": "🐛", "チョウ": "🦋", "ハチ": "🐝", "テントウムシ": "🐞", "アリ": "🐜",
+            "ヌー": "🐂", "ラクダ": "🐫", "アルパカ": "🦙", "ラマ": "🦙", "ロバ": "🫏", "柴犬": "🐕",
+            "ドーベルマン": "🐕‍🦺", "土佐犬": "🐕", "セントバーナード": "🐶", "ペルシャ猫": "🐈", "三毛猫": "🐈",
+            "黒猫": "🐈‍⬛", "ヤマネコ": "🐱", "アライグマ": "🦝", "タヌキ": "🍃", "イタチ": "🦦", "スカンク": "🦨",
+            "ハリネズミ": "🦔", "ヤマアラシ": "🦔", "モグラ": "🕳️", "ビーバー": "🦫", "カピバラ": "🥔",
+            "カワウソ": "🦦", "ラッコ": "🦦", "アザラシ": "🦭", "アシカ": "🦭", "セイウチ": "🦭", "ジュゴン": "🐋",
+            "イルカ": "🐬", "マンボウ": "🐟", "アンコウ": "🔦", "タツノオトシゴ": "🐉", "ウミガメ": "🐢",
+            "フラミンゴ": "🦩", "クジャク": "🦚", "白鳥": "🦢", "キジ": "🐦", "キツツキ": "🐦", "カワセミ": "🐦",
+            "ツバメ": "🐦", "トノサマガエル": "🐸", "アマガエル": "🐸", "ウーパールーパー": "🦎", "イモリ": "🦎",
+            "ヤモリ": "🦎", "リクガメ": "🐢", "モルモット": "🐹", "チンチラ": "🐭", "フェレット": "🦦",
+            "ハツカネズミ": "🐁", "スズメ": "🐦", "金魚": "🐟", "コイ": "🐟", "メダカ": "🐟", "ドジョウ": "🐟",
+            "ザリガニ": "🦞", "サワガニ": "🦀", "ヤドカリ": "🐚", "アサリ": "🐚", "シジミ": "🐚", "カタツムリ": "🐌",
+            "ナメクジ": "🐌", "ミミズ": "🪱", "シロアリ": "🐜", "アブラムシ": "🐛", "ガ": "🦋", "ミツバチ": "🐝",
+            "アシナガバチ": "🐝", "ハエ": "🪰", "カ": "🦟", "ゴキブリ": "🪳", "ノミ": "🐛", "ダニ": "🕷️",
+            "バッタ": "🦗", "コオロギ": "🦗", "スズムシ": "🦗", "セミ": "🦗", "ホタル": "🔦", "アメンボ": "🦟",
+            "ゲンゴロウ": "🪲", "タガメ": "🪲", "ミズカマキリ": "🦗", "ゾウリムシ": "🦠", "ミジンコ": "🦠",
+            "アメーバ": "🦠", "プラナリア": "🪱", "クリオネ": "🧚", "クラゲ": "🪼", "ヒトデ": "⭐", "ウニ": "🦔",
+            "ナマコ": "🥒", "フグ": "🐡", "イワシ": "🐟", "アジ": "🐟", "サバ": "🐟", "サンマ": "🐟", "タイ": "🐟",
+            "マグロ": "🐟", "サケ": "🐟", "ラーテル": "🦡", "クズリ": "🦡", "タスマニアデビル": "👿", "マンドリル": "🐒"
+        };
+
+        const getEmoji = (name) => {
+            for (const [key, emoji] of Object.entries(ANIMAL_EMOJIS)) {
+                if (name.includes(key)) return emoji;
+            }
+            return "🐾"; // Default
         };
 
         const CARD_DATA_RAW = {
@@ -145,109 +183,95 @@
             { id: 'm6', text: 'バトルを3回行う', target: 3, reward: 800, type: 'BATTLE_COUNT' },
         ];
 
-        // --- COMPONENTS ---
+        // --- UI COMPONENTS ---
 
         const Card = ({ card, isNew, size = "normal", showPower = true, isHidden = false, onClick, className = "", isRental = false, isSelected = false, level = 0 }) => {
-            if (!card) return <div className="w-32 h-48 bg-gray-800 rounded-lg animate-pulse"></div>;
+            if (!card) return <div className="w-24 h-36 bg-gray-800 rounded-lg animate-pulse"></div>;
             
-            // Level Scaling
-            const levelMultiplier = 1 + (level * 0.1); // +10% per level
+            const levelMultiplier = 1 + (level * 0.1);
             const displayPower = Math.floor(card.power * levelMultiplier);
             const displayHp = Math.floor(card.hp * levelMultiplier);
 
             if (isHidden) {
                 return (
-                    <div className={`relative rounded-xl bg-gray-900 border-2 border-gray-700 flex flex-col items-center justify-center ${size === "small" ? "w-24 h-32" : "w-48 h-64"} shadow-xl overflow-hidden ${className}`}>
-                        <div className="text-gray-700 font-bold text-4xl">?</div>
-                        <div className="text-gray-600 text-xs mt-2">UNKNOWN</div>
+                    <div className={`relative rounded-xl bg-gray-900 border-2 border-gray-700 flex flex-col items-center justify-center ${size === "small" ? "w-24 h-32 text-xs" : "w-48 h-64 text-xl"} shadow-xl overflow-hidden ${className}`}>
+                        <div className="text-gray-700 font-bold">?</div>
+                        <div className="text-gray-600 text-[10px] mt-1">UNKNOWN</div>
                     </div>
                 );
             }
 
             const config = RARITY_CONFIG[card.rarity];
             const isHolo = card.rarity === 'GOD' || card.rarity === 'LEGEND';
-            const glowClass = isHolo ? "animate-pulse ring-4 ring-yellow-400/50" : "";
+            const glowClass = isHolo ? "animate-pulse ring-2 ring-yellow-400/50" : "";
             const bgGradient = `bg-gradient-to-br ${config.color}`;
-            const dimClass = size === "small" ? "w-24 h-36 text-[10px]" : "w-56 h-80";
-            const titleSize = size === "small" ? "text-xs" : "text-lg";
-            const iconSize = size === "small" ? 16 : 32;
-
-            // Selection Border
-            const selectionBorder = isSelected ? "ring-4 ring-green-500 scale-105" : "";
+            const dimClass = size === "small" ? "w-24 h-32 text-[10px]" : "w-48 h-64";
+            const titleSize = size === "small" ? "text-[10px]" : "text-sm";
+            const emojiSize = size === "small" ? "text-4xl" : "text-7xl";
+            const emoji = useMemo(() => getEmoji(card.name), [card.name]);
 
             return (
-                <div onClick={onClick} className={`relative rounded-xl p-1 transition-all duration-300 transform ${onClick ? 'cursor-pointer hover:scale-105 active:scale-95' : ''} ${glowClass} ${bgGradient} shadow-2xl ${className} ${selectionBorder}`}>
-                    <div className={`h-full w-full bg-gray-900/40 backdrop-blur-sm rounded-lg border-2 ${config.border} flex flex-col items-center p-2 relative overflow-hidden ${dimClass}`}>
-                        {isHolo && (
-                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent animate-[shimmer_2s_infinite] pointer-events-none" />
-                        )}
+                <div onClick={onClick} className={`relative rounded-xl p-0.5 transition-all duration-300 transform ${onClick ? 'cursor-pointer active:scale-95' : ''} ${glowClass} ${bgGradient} shadow-lg ${className} ${isSelected ? "ring-4 ring-green-500" : ""}`}>
+                    <div className={`h-full w-full bg-gray-900 rounded-lg overflow-hidden flex flex-col relative ${dimClass}`}>
+                        
+                        {/* Background Pattern */}
+                        <div className="absolute inset-0 bg-gray-800 opacity-50" style={{backgroundImage: 'radial-gradient(#ffffff10 1px, transparent 1px)', backgroundSize: '10px 10px'}}></div>
+                        {isHolo && <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent animate-[shimmer_3s_infinite] pointer-events-none" style={{backgroundSize: '200% 100%'}} />}
 
-                        <div className="flex justify-between w-full items-center mb-2 z-10">
-                            <span className={`font-black ${config.text} ${size === "small" ? "text-[9px]" : "text-sm"}`}>{card.rarity}</span>
-                            <span className="text-white/80 font-mono text-[10px]">Lv.{level+1}</span>
+                        {/* Top Info */}
+                        <div className="absolute top-0 left-0 z-10 flex justify-between items-center p-1 w-full">
+                            <span className={`font-black ${config.text} drop-shadow-md px-1 bg-black/40 rounded`}>{card.rarity.substring(0,1)}</span>
+                            <span className="text-white/90 font-mono bg-black/50 px-1 rounded text-[10px]">Lv.{level+1}</span>
                         </div>
 
-                        <div className={`w-full flex-1 mb-2 bg-black/50 rounded flex items-center justify-center border ${config.border} relative overflow-hidden`}>
-                            <div className={`absolute inset-0 opacity-30 bg-gradient-to-t ${config.color}`}></div>
-                            {card.rarity === 'GOD' ? <Sparkles size={iconSize * 2} className="text-yellow-200 animate-spin-slow" /> :
-                                card.rarity === 'LEGEND' ? <Trophy size={iconSize * 2} className="text-yellow-500" /> :
-                                    card.rarity === 'ULTIMATE' ? <Skull size={iconSize * 2} className="text-red-500" /> :
-                                        <span className="text-4xl">🐾</span>
-                            }
+                        {/* Emoji Icon */}
+                        <div className={`flex-1 flex items-center justify-center z-10 ${emojiSize} filter drop-shadow-lg`}>
+                            {emoji}
                         </div>
 
-                        <div className="w-full text-center z-10 space-y-1">
-                            <h3 className={`${titleSize} font-bold text-white mb-1 leading-tight line-clamp-2 min-h-[2.5em] flex items-center justify-center`}>
+                        {/* Bottom Info */}
+                        <div className="relative z-10 w-full p-1.5 text-center bg-gradient-to-t from-black/90 to-transparent">
+                            <h3 className={`${titleSize} font-bold text-white mb-1 leading-tight line-clamp-2 min-h-[2.4em] flex items-center justify-center drop-shadow-md`}>
                                 {card.name}
-                                {level > 0 && <span className="text-yellow-400 ml-1">★{level}</span>}
                             </h3>
                             {showPower && (
-                                <div className="flex justify-between text-[10px] font-mono text-gray-300 bg-black/60 rounded px-1 py-0.5">
+                                <div className="flex justify-between gap-1 text-[9px] font-mono text-white bg-black/60 rounded px-1 py-0.5 backdrop-blur-sm border border-white/10">
                                     <span className="text-green-400">HP {displayHp}</span>
                                     <span className="text-red-400">ATK {displayPower}</span>
                                 </div>
                             )}
                         </div>
 
-                        {isNew && (
-                            <div className="absolute top-10 -right-8 bg-red-600 text-white text-xs font-bold px-8 py-1 rotate-45 shadow-lg z-20">NEW!</div>
-                        )}
-                        {isRental && (
-                            <div className="absolute top-10 -left-8 bg-blue-600 text-white text-xs font-bold px-8 py-1 -rotate-45 shadow-lg z-20">RENTAL</div>
-                        )}
-                        {isSelected && (
-                            <div className="absolute inset-0 bg-green-500/20 z-20 flex items-center justify-center">
-                                <CheckCircle size={40} className="text-green-400 drop-shadow-lg" />
-                            </div>
-                        )}
+                        {isNew && <div className="absolute top-3 -right-8 bg-red-600 text-white text-[8px] font-bold px-8 py-0.5 rotate-45 shadow-lg z-20">NEW</div>}
+                        {isRental && <div className="absolute top-3 -left-8 bg-blue-600 text-white text-[8px] font-bold px-8 py-0.5 -rotate-45 shadow-lg z-20">RENTAL</div>}
+                        {isSelected && <div className="absolute inset-0 bg-green-500/30 z-30 flex items-center justify-center"><Icons.CheckCircle size={32} className="text-white drop-shadow-lg"/></div>}
                     </div>
                 </div>
             );
         };
 
-        const Button = ({ children, onClick, variant = "primary", disabled = false, className = "" }) => {
-            const baseStyle = "px-4 py-2 rounded-lg font-bold transition-all active:scale-95 flex items-center justify-center gap-2";
+        const Button = ({ children, onClick, variant = "primary", disabled = false, className = "", size="normal" }) => {
+            const baseStyle = "rounded-lg font-bold transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale";
+            const sizeStyles = size === "small" ? "px-2 py-1 text-xs" : "px-4 py-3 text-sm md:text-base";
             const variants = {
-                primary: "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white shadow-lg shadow-blue-900/50",
+                primary: "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white shadow-lg shadow-blue-900/30",
                 secondary: "bg-gray-700 hover:bg-gray-600 text-white border border-gray-600",
-                gold: "bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-white shadow-lg shadow-yellow-900/50",
-                danger: "bg-red-600 hover:bg-red-500 text-white",
-                green: "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/50"
+                gold: "bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-white shadow-lg shadow-yellow-900/30",
+                danger: "bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/30",
+                green: "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/30"
             };
             return (
-                <button onClick={onClick} disabled={disabled} className={`${baseStyle} ${variants[variant]} ${disabled ? 'opacity-50 cursor-not-allowed grayscale' : ''} ${className}`}>{children}</button>
+                <button onClick={onClick} disabled={disabled} className={`${baseStyle} ${sizeStyles} ${variants[variant]} ${className}`}>{children}</button>
             );
         };
 
-        // --- ANIMATION COMPONENTS ---
-        
+        // --- ANIMATION & MODALS ---
         const PackOpener = ({ onOpen }) => {
             const [cutProgress, setCutProgress] = useState(0);
             const [isCut, setIsCut] = useState(false);
             const packRef = useRef(null);
             const isDragging = useRef(false);
-
-            const handleStart = (e) => { isDragging.current = true; };
+            const handleStart = () => { isDragging.current = true; };
             const handleMove = (e) => {
                 if (!isDragging.current || isCut) return;
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -255,79 +279,68 @@
                 const x = clientX - rect.left;
                 const progress = Math.min(100, Math.max(0, (x / rect.width) * 100));
                 setCutProgress(progress);
-                if (progress > 90) {
-                    setIsCut(true);
-                    setTimeout(onOpen, 600);
-                }
+                if (progress > 85) { setIsCut(true); setTimeout(onOpen, 600); }
             };
             const handleEnd = () => { isDragging.current = false; if (!isCut) setCutProgress(0); };
-
             return (
-                <div className="flex flex-col items-center justify-center h-full w-full animate-in fade-in zoom-in">
+                <div className="flex flex-col items-center justify-center h-full w-full animate-in fade-in zoom-in fixed inset-0 bg-black/80 z-50" style={{zIndex: 20000}}>
                    <div className="relative w-64 h-96 bg-gradient-to-br from-yellow-600 to-yellow-800 rounded-xl shadow-2xl border-4 border-yellow-400 flex items-center justify-center overflow-hidden select-none"
                         ref={packRef} onMouseDown={handleStart} onMouseMove={handleMove} onMouseUp={handleEnd} onMouseLeave={handleEnd} onTouchStart={handleStart} onTouchMove={handleMove} onTouchEnd={handleEnd}>
                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 pointer-events-none"></div>
-                       <div className="z-10 text-center pointer-events-none"><h2 className="text-4xl font-black text-white drop-shadow-lg italic">WILD<br/>PACK</h2><div className="mt-4 text-yellow-200 font-bold">SWIPE TO CUT ✂️</div></div>
-                       <div className={`absolute top-0 left-0 w-full h-24 bg-gray-900/10 transition-transform duration-500 ${isCut ? 'translate-x-full rotate-12 opacity-0' : ''} pointer-events-none`}><div className="absolute bottom-0 left-0 w-full h-1 bg-dashed bg-white opacity-50"></div></div>
-                       <div className="absolute top-16 left-0 w-full h-16 z-20 cursor-col-resize group"><div className="absolute top-1/2 left-0 w-full h-1 bg-white/20 border-t-2 border-dashed border-white/50 group-hover:bg-white/40"></div><div className="absolute top-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-900 pointer-events-none transition-all duration-75" style={{ left: `${cutProgress}%` }}><Scissors size={16} /></div></div>
+                       <div className="z-10 text-center pointer-events-none"><h2 className="text-4xl font-black text-white drop-shadow-lg italic">WILD<br/>PACK</h2><div className="mt-4 text-yellow-200 font-bold text-sm">SWIPE TOP ✂️</div></div>
+                       <div className={`absolute top-0 left-0 w-full h-24 bg-gray-900/20 transition-transform duration-500 ${isCut ? 'translate-x-full rotate-12 opacity-0' : ''} pointer-events-none border-b-2 border-dashed border-white/50`}></div>
+                       <div className="absolute top-0 left-0 w-full h-24 z-20 cursor-col-resize"><div className="absolute top-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-900 pointer-events-none transition-all duration-75" style={{ left: `${cutProgress}%`, transform: 'translate(-50%, -50%)' }}><Icons.Scissors size={20} /></div></div>
                        {isCut && <div className="absolute inset-0 bg-white animate-pulse z-50 pointer-events-none"></div>}
                    </div>
-                   <p className="mt-8 text-gray-400 animate-bounce">点線に沿って右へスワイプ！</p>
+                   <p className="mt-8 text-gray-300 animate-bounce font-bold">点線に沿って右へスワイプ！</p>
                 </div>
             );
         };
 
         const BattleTimer = ({ onComplete }) => {
-            const [size, setSize] = useState(200); 
+            const [size, setSize] = useState(200);
             const [isActive, setIsActive] = useState(true);
-            const [result, setResult] = useState(null); 
+            const [result, setResult] = useState(null);
             const reqRef = useRef();
             const startTime = useRef(Date.now());
-
             useEffect(() => {
                 const animate = () => {
                     if (!isActive) return;
                     const elapsed = Date.now() - startTime.current;
-                    const duration = 1500; 
-                    const progress = (elapsed % duration) / duration; 
-                    const currentSize = 200 * (1 - progress);
-                    setSize(currentSize);
+                    const duration = 1500;
+                    const progress = (elapsed % duration) / duration;
+                    setSize(200 * (1 - progress));
                     reqRef.current = requestAnimationFrame(animate);
                 };
                 reqRef.current = requestAnimationFrame(animate);
                 return () => cancelAnimationFrame(reqRef.current);
             }, [isActive]);
-
             const handleStop = () => {
                 if (!isActive) return;
                 setIsActive(false);
                 cancelAnimationFrame(reqRef.current);
                 const target = 50;
                 const diff = Math.abs(size - target);
-                let multiplier = 1.0;
-                let label = "MISS...";
-                let color = "text-gray-400";
-                if (diff < 10) { multiplier = 2.0; label = "PERFECT!!"; color = "text-yellow-400 text-6xl"; }
-                else if (diff < 30) { multiplier = 1.5; label = "GREAT!"; color = "text-green-400 text-5xl"; }
-                else if (diff < 60) { multiplier = 1.1; label = "GOOD"; color = "text-blue-400 text-4xl"; }
-                else { multiplier = 0.8; label = "BAD..."; color = "text-red-400 text-3xl"; }
+                let multiplier = 1.0, label = "MISS...", color = "text-gray-400";
+                if (diff < 15) { multiplier = 2.0; label = "PERFECT!!"; color = "text-yellow-400"; }
+                else if (diff < 40) { multiplier = 1.5; label = "GREAT!"; color = "text-green-400"; }
+                else if (diff < 70) { multiplier = 1.1; label = "GOOD"; color = "text-blue-400"; }
+                else { multiplier = 0.8; label = "BAD..."; color = "text-red-400"; }
                 setResult({ multiplier, label, color });
-                setTimeout(() => onComplete(multiplier), 1500);
+                setTimeout(() => onComplete(multiplier), 1000);
             };
-
             return (
-                <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm" onClick={handleStop} onTouchEnd={(e)=>{e.preventDefault(); handleStop();}}>
+                <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/80 backdrop-blur-md" onTouchStart={(e)=>e.stopPropagation()} onClick={(e)=>e.stopPropagation()} onTouchEnd={handleStop} onMouseDown={handleStop}>
                     {!result ? (
                         <div className="relative w-64 h-64 flex items-center justify-center cursor-pointer">
-                            <h3 className="absolute -top-12 text-white font-bold text-xl animate-pulse text-center w-full">タイミングよく止めろ！</h3>
-                            <div className="absolute w-[50px] h-[50px] border-4 border-white rounded-full shadow-[0_0_15px_rgba(255,255,255,0.8)]"></div>
+                            <h3 className="absolute -top-16 text-white font-bold text-2xl animate-pulse text-center w-full drop-shadow-lg">TAP TO STOP!</h3>
+                            <div className="absolute w-[50px] h-[50px] border-4 border-white rounded-full shadow-[0_0_20px_rgba(255,255,255,0.8)]"></div>
                             <div className="absolute border-4 border-red-500 rounded-full opacity-80 box-border" style={{ width: Math.max(0, size)+'px', height: Math.max(0, size)+'px' }}></div>
-                            <div className="absolute bottom-0 text-gray-400 text-xs">画面タップでSTOP</div>
                         </div>
                     ) : (
-                        <div className={`font-black ${result.color} animate-in zoom-in duration-300 drop-shadow-2xl flex flex-col items-center`}>
+                        <div className={`font-black ${result.color} text-5xl animate-in zoom-in duration-200 drop-shadow-2xl flex flex-col items-center`}>
                             <div>{result.label}</div>
-                            <div className="text-white text-lg mt-2">Team Power x{result.multiplier}</div>
+                            <div className="text-white text-xl mt-2 font-mono">POWER x{result.multiplier}</div>
                         </div>
                     )}
                 </div>
@@ -339,25 +352,16 @@
         function AnimalChronicle() {
             const [coins, setCoins] = useState(1000);
             const [collection, setCollection] = useState({});
-            const [cardLevels, setCardLevels] = useState({}); // { cardId: level }
+            const [cardLevels, setCardLevels] = useState({});
             const [view, setView] = useState('HOME');
-            
-            // Pack State
             const [packState, setPackState] = useState('IDLE');
             const [pendingPackCards, setPendingPackCards] = useState(null);
-            
-            // Battle State
             const [battleState, setBattleState] = useState(null);
             const [isBattleTiming, setIsBattleTiming] = useState(false);
-            const [damageAnim, setDamageAnim] = useState({ active: false, target: null, value: 0 }); 
-            
-            // Deck Selection
-            const [selectedDeck, setSelectedDeck] = useState([]); // Array of card objects
-
-            const [selectedCard, setSelectedCard] = useState(null); // For modal
+            const [damageAnim, setDamageAnim] = useState({ active: false, target: null, value: 0 });
+            const [selectedDeck, setSelectedDeck] = useState([]);
+            const [selectedCard, setSelectedCard] = useState(null);
             const [loginBonus, setLoginBonus] = useState(null);
-
-            // Persistence & Timers
             const [lastFreePackClaim, setLastFreePackClaim] = useState(0);
             const [freePackProgress, setFreePackProgress] = useState(0);
             const [timeUntilFreePack, setTimeUntilFreePack] = useState("");
@@ -370,9 +374,8 @@
             const [shopItems, setShopItems] = useState([]);
             const [auctionItems, setAuctionItems] = useState([]);
 
-            // --- INITIALIZATION ---
             useEffect(() => {
-                const saved = localStorage.getItem('animalChronicleData_v8');
+                const saved = localStorage.getItem('animalChronicleData_v10');
                 let lastLoginDate = "";
                 if (saved) {
                     const parsed = JSON.parse(saved);
@@ -386,29 +389,22 @@
                     setClaimedMissions(parsed.claimedMissions || []);
                     lastLoginDate = parsed.lastLoginDate || "";
                 }
-                
-                // Check Login Bonus
                 const today = new Date().toLocaleDateString('ja-JP');
-                if (lastLoginDate !== today) {
-                    setTimeout(() => setLoginBonus(500), 1000); // Delay for effect
-                }
-
+                if (lastLoginDate !== today) setTimeout(() => setLoginBonus(500), 1000);
                 refreshShop();
                 checkDailyReset(saved ? JSON.parse(saved).lastDailyReset : "");
             }, []);
 
             useEffect(() => {
                 const today = new Date().toLocaleDateString('ja-JP');
-                localStorage.setItem('animalChronicleData_v8', JSON.stringify({
-                    coins, collection, cardLevels, lastFreePackClaim, lastDailyReset, activeMissions, missionProgress, claimedMissions,
-                    lastLoginDate: today
+                localStorage.setItem('animalChronicleData_v10', JSON.stringify({
+                    coins, collection, cardLevels, lastFreePackClaim, lastDailyReset, activeMissions, missionProgress, claimedMissions, lastLoginDate: today
                 }));
             }, [coins, collection, cardLevels, lastFreePackClaim, lastDailyReset, activeMissions, missionProgress, claimedMissions]);
 
             useEffect(() => {
                 const interval = setInterval(() => {
                     const now = Date.now();
-                    // Free Pack Logic
                     const msSinceClaim = now - lastFreePackClaim;
                     const msCooldown = 24 * 60 * 60 * 1000;
                     if (msSinceClaim >= msCooldown) {
@@ -423,14 +419,25 @@
                         const s = Math.floor((msLeft % (1000 * 60)) / 1000);
                         setTimeUntilFreePack(`${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`);
                     }
-                    // Auction Logic
                     setAuctionItems(prev => prev.map(item => {
                         if (item.endTime <= now) return item;
                         const timeLeft = (item.endTime - now) / 1000;
                         const rivalBidChance = item.lastBidder === 'YOU' ? 0.3 : 0.05; 
                         if (Math.random() < rivalBidChance && timeLeft > 0) {
                             const raise = Math.floor(Math.random() * 500) + 100;
-                            return { ...item, currentBid: item.currentBid + raise, lastBidder: 'Rival' };
+                            // NPC will not bid if currentBid >= buyoutPrice (which is approx 2x startPrice)
+                            if (item.currentBid < item.buyoutPrice) {
+                                const newBid = item.currentBid + raise;
+                                // If NPC bids and exceeds buyout, they take it instantly? Or just bid high.
+                                // Simpler: NPC bids normally.
+                                // But we check for buyout later.
+                                return { ...item, currentBid: newBid, lastBidder: 'Rival' };
+                            }
+                        }
+                        // Check Buyout Condition for NPC or Time
+                        if (item.currentBid >= item.buyoutPrice && item.endTime > now) {
+                             // Force end if price gets too high (Immediate Buyout Logic)
+                             return { ...item, endTime: now };
                         }
                         return item;
                     }));
@@ -439,13 +446,11 @@
                 return () => clearInterval(interval);
             }, [lastFreePackClaim, lastDailyReset]);
 
-            // --- HELPERS ---
             const checkDailyReset = (currentLastResetDate) => {
                 const today = new Date().toLocaleDateString('ja-JP');
                 if (today !== currentLastResetDate) {
                     const shuffled = [...MISSION_POOL].sort(() => 0.5 - Math.random());
-                    const newMissions = shuffled.slice(0, 3);
-                    setActiveMissions(newMissions);
+                    setActiveMissions(shuffled.slice(0, 3));
                     setMissionProgress({});
                     setClaimedMissions([]);
                     setLastDailyReset(today);
@@ -479,9 +484,7 @@
             const getRandomCard = (minRarityIndex = 5) => {
                 const order = ['GOD', 'LEGEND', 'ULTIMATE', 'EPIC', 'RARE', 'COMMON'];
                 let rarity;
-                do {
-                    rarity = rollRarity();
-                } while (order.indexOf(rarity) > minRarityIndex);
+                do { rarity = rollRarity(); } while (order.indexOf(rarity) > minRarityIndex);
                 const pool = ALL_CARDS.filter(c => c.rarity === rarity);
                 return pool[Math.floor(Math.random() * pool.length)];
             };
@@ -496,16 +499,9 @@
                 let card;
                 do { card = getRandomCard(); } while (['COMMON', 'RARE'].includes(card.rarity));
                 const startPrice = Math.floor(RARITY_CONFIG[card.rarity].sell * 1.5);
-                setAuctionItems(prev => [...prev, {
-                    id: Date.now() + Math.random(),
-                    card: card,
-                    currentBid: startPrice,
-                    endTime: Date.now() + 60000,
-                    lastBidder: 'System'
-                }]);
+                setAuctionItems(prev => [...prev, { id: Date.now() + Math.random(), card: card, currentBid: startPrice, endTime: Date.now() + 60000, lastBidder: 'System' }]);
             };
 
-            // --- ACTIONS ---
             const openPack = (count = 1, isFree = false) => {
                 if (isFree) {
                     if (freePackProgress < 100) return;
@@ -534,10 +530,7 @@
                 setPackState('SHOW_RESULTS');
                 updateMission('GACHA_COUNT');
             };
-            const claimMission = (m) => {
-                setCoins(prev => prev + m.reward);
-                setClaimedMissions(prev => [...prev, m.id]);
-            };
+            const claimMission = (m) => { setCoins(prev => prev + m.reward); setClaimedMissions(prev => [...prev, m.id]); };
             const sellCard = (card) => {
                 if (!collection[card.id] || collection[card.id] <= 0) return;
                 const price = RARITY_CONFIG[card.rarity].sell;
@@ -547,19 +540,13 @@
                 setSelectedCard(null);
                 updateMission('SELL_CARD');
             };
-            
-            // NEW: Level Up
             const levelUpCard = (card) => {
                 if (!collection[card.id] || collection[card.id] < 3) return;
-                if (!window.confirm(`${card.name} 3枚を消費してレベルアップさせますか？\n(ステータス+10%)`)) return;
-                
-                // Consume 3 cards (keep 1 base technically, logic: owned count - 3)
+                if (!window.confirm(`${card.name} 3枚を消費して覚醒(LvUP)させますか？\n(ステータス+10%)`)) return;
                 setCollection(prev => ({ ...prev, [card.id]: prev[card.id] - 3 }));
                 setCardLevels(prev => ({ ...prev, [card.id]: (prev[card.id] || 0) + 1 }));
-                // Close and reopen to refresh stats in modal
                 setSelectedCard(null);
             };
-
             const buyShopItem = (card) => {
                 const price = RARITY_CONFIG[card.rarity].buy;
                 if (coins < price) { alert("お金が足りません！"); return; }
@@ -572,9 +559,7 @@
                 const bidAmount = currentBid + 100;
                 if (coins < bidAmount) { alert("入札するお金が足りません"); return; }
                 setAuctionItems(prev => prev.map(item => {
-                    if (item.id === auctionId) {
-                        return { ...item, currentBid: bidAmount, lastBidder: 'YOU', endTime: item.endTime + 5000 };
-                    }
+                    if (item.id === auctionId) { return { ...item, currentBid: bidAmount, lastBidder: 'YOU', endTime: item.endTime + 5000 }; }
                     return item;
                 }));
             };
@@ -587,106 +572,62 @@
                 alert(`${item.card.name} を入手しました！`);
             };
 
-            // --- DECK SELECTION LOGIC ---
             const toggleDeckCard = (card) => {
-                if (selectedDeck.find(c => c.id === card.id)) {
-                    setSelectedDeck(prev => prev.filter(c => c.id !== card.id));
-                } else {
-                    if (selectedDeck.length >= 3) return;
-                    setSelectedDeck(prev => [...prev, card]);
-                }
+                if (selectedDeck.find(c => c.id === card.id)) { setSelectedDeck(prev => prev.filter(c => c.id !== card.id)); }
+                else { if (selectedDeck.length >= 3) return; setSelectedDeck(prev => [...prev, card]); }
             };
-
             const autoSelectDeck = () => {
                 const myIds = Object.keys(collection).filter(id => collection[id] > 0);
                 const deck = [];
                 const ownedCards = ALL_CARDS.filter(c => myIds.includes(String(c.id)));
-                
-                // Calculate effective power with levels
                 const effectiveCards = ownedCards.map(c => {
                     const level = cardLevels[c.id] || 0;
                     const mult = 1 + (level * 0.1);
                     return { ...c, effectivePower: c.power * mult };
                 });
-
                 effectiveCards.sort((a,b) => b.effectivePower - a.effectivePower);
-                
                 for(let i=0; i<3; i++) {
-                    if(effectiveCards[i]) {
-                        // Remove temporary prop
-                        const { effectivePower, ...rest } = effectiveCards[i];
-                        deck.push(rest);
-                    } else {
-                        const rental = ALL_CARDS.find(c => c.rarity === 'COMMON' && c.name === 'ハムスター');
-                        deck.push({ ...rental, id: `rental-${i}`, name: `レンタル・${rental.name}`, isRental: true });
-                    }
+                    if(effectiveCards[i]) { const { effectivePower, ...rest } = effectiveCards[i]; deck.push(rest); }
+                    else { const rental = ALL_CARDS.find(c => c.rarity === 'COMMON' && c.name === 'ハムスター'); deck.push({ ...rental, id: `rental-${i}`, name: `レンタル・${rental.name}`, isRental: true }); }
                 }
                 setSelectedDeck(deck);
             };
-
             const confirmDeckAndStart = () => {
-                if (selectedDeck.length !== 3) {
-                    alert("カードを3枚選んでください！");
-                    return;
-                }
-                
-                // Prepare Battle with Team Stats (Apply Levels)
+                if (selectedDeck.length !== 3) { alert("カードを3枚選んでください！"); return; }
                 const myTeam = selectedDeck.map(c => {
                     const level = cardLevels[c.id] || 0;
                     const mult = 1 + (level * 0.1);
-                    return { 
-                        ...c, 
-                        hp: Math.floor(c.hp * mult),
-                        power: Math.floor(c.power * mult),
-                        currentHp: Math.floor(c.hp * mult),
-                        level: level,
-                        isRental: c.isRental || false 
-                    };
+                    return { ...c, hp: Math.floor(c.hp * mult), power: Math.floor(c.power * mult), currentHp: Math.floor(c.hp * mult), level: level, isRental: c.isRental || false };
                 });
-                
                 const playerTotalPower = myTeam.reduce((sum, c) => sum + c.power, 0);
                 const playerAvgPower = playerTotalPower / 3;
-
                 const potentialEnemies = ALL_CARDS.filter(c => Math.abs(c.power - playerAvgPower) < 2000);
                 const enemyTeam = [];
                 for(let i=0; i<3; i++) {
-                    const base = potentialEnemies.length > 0 
-                        ? potentialEnemies[Math.floor(Math.random() * potentialEnemies.length)]
-                        : ALL_CARDS[Math.floor(Math.random() * ALL_CARDS.length)];
+                    const base = potentialEnemies.length > 0 ? potentialEnemies[Math.floor(Math.random() * potentialEnemies.length)] : ALL_CARDS[Math.floor(Math.random() * ALL_CARDS.length)];
                     enemyTeam.push({ ...base, currentHp: base.hp, level: 0 });
                 }
-
                 const myMaxHp = myTeam.reduce((sum, c) => sum + c.hp, 0);
                 const myTotalPower = myTeam.reduce((sum, c) => sum + c.power, 0);
                 const enMaxHp = enemyTeam.reduce((sum, c) => sum + c.hp, 0);
                 const enTotalPower = enemyTeam.reduce((sum, c) => sum + c.power, 0);
-
-                setBattleState({
-                    myTeam, enemyTeam,
-                    myHp: myMaxHp, myMaxHp, myPower: myTotalPower,
-                    enHp: enMaxHp, enMaxHp, enPower: enTotalPower,
-                    turn: 0, logs: [], phase: 'PLAYER_TURN'
-                });
-                
+                setBattleState({ myTeam, enemyTeam, myHp: myMaxHp, myMaxHp, myPower: myTotalPower, enHp: enMaxHp, enMaxHp, enPower: enTotalPower, turn: 0, logs: [], phase: 'PLAYER_TURN' });
                 setView('BATTLE');
                 updateMission('BATTLE_COUNT');
             };
 
-            // --- BATTLE LOGIC ---
             const startTimingRound = () => { setIsBattleTiming(true); };
             const resolveTiming = (multiplier) => { setIsBattleTiming(false); executePlayerAttack(multiplier); };
-
             const executePlayerAttack = (multiplier) => {
                 if (!battleState) return;
                 const damage = Math.floor(battleState.myPower * multiplier);
                 const newEnHp = Math.max(0, battleState.enHp - damage);
                 setDamageAnim({ active: true, target: 'ENEMY', value: damage });
                 setTimeout(() => setDamageAnim({ active: false, target: null, value: 0 }), 1000);
-                const newLogs = [...battleState.logs, `味方チームの攻撃！ ${damage}ダメージ！`];
-
+                const newLogs = [...battleState.logs, `味方攻撃: ${damage}ダメ (x${multiplier.toFixed(1)})`];
                 if (newEnHp === 0) {
                     setTimeout(() => {
-                        setBattleState(prev => ({ ...prev, enHp: newEnHp, finished: true, won: true, reward: 1000, logs: [...newLogs, "敵チーム撃破！"] }));
+                        setBattleState(prev => ({ ...prev, enHp: newEnHp, finished: true, won: true, reward: 1000, logs: [...newLogs, "WIN!"] }));
                         setCoins(prev => prev + 1000);
                         updateMission('BATTLE_WIN');
                     }, 1000);
@@ -695,63 +636,45 @@
                     setTimeout(executeEnemyAttack, 1500);
                 }
             };
-
             const executeEnemyAttack = () => {
                 setBattleState(prev => {
                     if (prev.finished) return prev;
                     const variance = 0.9 + Math.random() * 0.2;
                     const damage = Math.floor(prev.enPower * variance);
                     const newMyHp = Math.max(0, prev.myHp - damage);
-                    const newLogs = [...prev.logs, `敵チームの反撃！ ${damage}ダメージ！`];
+                    const newLogs = [...prev.logs, `敵攻撃: ${damage}ダメ`];
                     if (newMyHp === 0) {
                         setCoins(c => c + 50);
-                        return { ...prev, myHp: newMyHp, logs: [...newLogs, "全滅しました..."], finished: true, won: false, reward: 50 };
+                        return { ...prev, myHp: newMyHp, logs: [...newLogs, "LOSE..."], finished: true, won: false, reward: 50 };
                     } else {
                         return { ...prev, myHp: newMyHp, logs: newLogs, phase: 'PLAYER_TURN' };
                     }
                 });
             };
 
-            // --- RENDERERS ---
-            
             const renderDeckSelect = () => {
                 const myIds = Object.keys(collection).filter(id => collection[id] > 0);
                 const ownedCards = ALL_CARDS.filter(c => myIds.includes(String(c.id))).sort((a,b) => b.power - a.power);
-
                 return (
-                    <div className="flex flex-col h-full animate-in fade-in">
+                    <div className="flex flex-col h-full animate-in fade-in scroll-container">
                         <div className="flex justify-between items-center mb-4 shrink-0">
-                            <Button onClick={() => setView('HOME')} variant="secondary" size="small"><RotateCcw size={16}/> 戻る</Button>
-                            <h2 className="text-xl font-bold text-white">デッキ編成 (3体選択)</h2>
+                            <Button onClick={() => setView('HOME')} variant="secondary" size="small"><Icons.RotateCcw size={16}/> 戻る</Button>
+                            <h2 className="text-xl font-bold text-white">デッキ編成 (3体)</h2>
                             <Button onClick={autoSelectDeck} variant="gold" size="small">おまかせ</Button>
                         </div>
-                        <div className="flex justify-center gap-4 mb-4 min-h-[120px] bg-gray-800/50 p-2 rounded-lg border border-dashed border-gray-600">
+                        <div className="flex justify-center gap-2 mb-4 min-h-[120px] bg-gray-800/50 p-2 rounded-lg border border-dashed border-gray-600">
                             {selectedDeck.map((card, idx) => (
                                 <div key={idx} className="relative cursor-pointer hover:scale-95 transition-transform" onClick={() => setSelectedDeck(prev => prev.filter((_, i) => i !== idx))}>
                                     <Card card={card} size="small" isRental={card.isRental} level={cardLevels[card.id] || 0} />
-                                    <div className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 shadow"><X size={12} /></div>
+                                    <div className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 shadow"><Icons.X size={12} /></div>
                                 </div>
                             ))}
                             {selectedDeck.length < 3 && Array(3 - selectedDeck.length).fill(0).map((_, i) => (
-                                <div key={i} className="w-24 h-36 bg-gray-800 rounded-lg border-2 border-dashed border-gray-600 flex items-center justify-center text-gray-500 text-xs">選択待ち</div>
+                                <div key={i} className="w-24 h-32 bg-gray-800 rounded-lg border-2 border-dashed border-gray-600 flex items-center justify-center text-gray-500 text-xs">選択待ち</div>
                             ))}
                         </div>
-                        <div className="flex justify-center mb-4">
-                            <Button onClick={confirmDeckAndStart} variant="danger" disabled={selectedDeck.length !== 3} className="px-12 py-3 text-xl shadow-lg w-full max-w-sm">バトル開始！</Button>
-                        </div>
-                        <div className="flex-1 overflow-y-auto">
-                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 pb-10">
-                                {ownedCards.map(card => {
-                                    const isSelected = selectedDeck.some(c => c.id === card.id);
-                                    return (
-                                        <div key={card.id} className="relative">
-                                            <Card card={card} size="small" onClick={() => toggleDeckCard(card)} isSelected={isSelected} level={cardLevels[card.id] || 0} />
-                                            <div className="absolute top-0 right-0 bg-blue-600 text-[10px] px-1 rounded-bl">x{collection[card.id]}</div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
+                        <div className="flex justify-center mb-4"><Button onClick={confirmDeckAndStart} variant="danger" disabled={selectedDeck.length !== 3} className="px-12 py-3 text-xl shadow-lg w-full max-w-sm">バトル開始！</Button></div>
+                        <div className="flex-1 overflow-y-auto pb-32 scroll-container"><div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">{ownedCards.map(card => { const isSelected = selectedDeck.some(c => c.id === card.id); return (<div key={card.id} className="relative"><Card card={card} size="small" onClick={() => toggleDeckCard(card)} isSelected={isSelected} level={cardLevels[card.id] || 0} /><div className="absolute top-0 right-0 bg-blue-600 text-[10px] px-1 rounded-bl">x{collection[card.id]}</div></div>); })}</div></div>
                     </div>
                 );
             };
@@ -759,60 +682,40 @@
             const renderBattleView = () => {
                 if (!battleState) return null;
                 if (isBattleTiming) return <BattleTimer onComplete={resolveTiming} />;
-                
                 if (battleState.finished) {
                     return (
                         <div className="flex flex-col items-center justify-center h-full space-y-6 animate-in zoom-in">
-                            <h2 className={`text-6xl font-black ${battleState.won ? 'text-yellow-400' : 'text-gray-500'}`}>{battleState.won ? 'VICTORY' : 'DEFEAT'}</h2>
+                            <h2 className={`text-5xl font-black ${battleState.won ? 'text-yellow-400' : 'text-gray-500'}`}>{battleState.won ? 'VICTORY' : 'DEFEAT'}</h2>
                             <div className="text-2xl text-white">報酬: <span className="text-yellow-400 font-bold">+{battleState.reward} G</span></div>
-                            {!battleState.won && <div className="text-gray-400 text-sm">負けても参加賞がもらえます！</div>}
                             <Button onClick={() => setView('HOME')} variant="primary" className="px-8 py-3 text-lg">ホームへ戻る</Button>
                         </div>
                     );
                 }
-
                 const myHpPercent = (battleState.myHp / battleState.myMaxHp) * 100;
                 const enHpPercent = (battleState.enHp / battleState.enMaxHp) * 100;
-
                 return (
                     <div className="h-full flex flex-col relative overflow-hidden">
                         <div className="flex justify-between items-center mb-2 bg-black/30 p-2 rounded shrink-0">
-                            <div className="text-white font-bold flex items-center gap-2"><Swords size={16}/> チーム総力戦</div>
-                            <div className={`font-bold ${battleState.phase === 'PLAYER_TURN' ? 'text-blue-400 animate-pulse' : 'text-red-400'}`}>
-                                {battleState.phase === 'PLAYER_TURN' ? "あなたのターン" : "相手のターン..."}
-                            </div>
+                            <div className="text-white font-bold flex items-center gap-2"><Icons.Swords size={16}/> チーム戦</div>
+                            <div className={`font-bold ${battleState.phase === 'PLAYER_TURN' ? 'text-blue-400 animate-pulse' : 'text-red-400'}`}>{battleState.phase === 'PLAYER_TURN' ? "あなたのターン" : "相手のターン..."}</div>
                         </div>
-                        <div className="flex-1 flex flex-col justify-center gap-8 relative z-10 p-2">
+                        <div className="flex-1 flex flex-col justify-center gap-4 relative z-10 p-2">
                             <div className="flex flex-col items-center gap-2">
-                                <div className="w-full max-w-md bg-gray-800 h-4 rounded-full border border-gray-600 relative overflow-hidden">
-                                    <div className="absolute top-0 left-0 h-full bg-red-500 transition-all duration-500" style={{width: `${enHpPercent}%`}}></div>
-                                    <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold shadow-black drop-shadow-md">{battleState.enHp} / {battleState.enMaxHp}</div>
-                                </div>
-                                <div className={`flex gap-2 transition-transform duration-300 ${damageAnim.active && damageAnim.target === 'ENEMY' ? 'animate-shake' : ''}`}>
-                                    {battleState.enemyTeam.map((c, i) => (
-                                        <div key={i} className="scale-75 -mx-4 md:scale-100 md:mx-2"><Card card={c} size="small" showPower={false} /></div>
-                                    ))}
+                                <div className="w-full max-w-md bg-gray-800 h-3 rounded-full border border-gray-600 relative overflow-hidden"><div className="absolute top-0 left-0 h-full bg-red-500 transition-all duration-500" style={{width: `${enHpPercent}%`}}></div></div>
+                                <div className={`flex justify-center -space-x-4 transition-transform duration-300 ${damageAnim.active && damageAnim.target === 'ENEMY' ? 'animate-shake' : ''}`}>
+                                    {battleState.enemyTeam.map((c, i) => <div key={i} className="transform scale-75 md:scale-100"><Card card={c} size="small" showPower={false} /></div>)}
                                 </div>
                                 {damageAnim.active && damageAnim.target === 'ENEMY' && <div className="absolute top-1/4 text-red-500 font-black text-6xl animate-damage" style={{textShadow:'2px 2px 0 #000'}}>-{damageAnim.value}</div>}
                             </div>
-                            <div className="flex justify-center items-center gap-8 text-sm font-mono text-gray-400">
-                                <div className="text-red-400">POW: {battleState.enPower}</div>
-                                <div className="font-black text-2xl text-white/20 italic">VS</div>
-                                <div className="text-blue-400">POW: {battleState.myPower}</div>
-                            </div>
+                            <div className="flex justify-center items-center gap-4 text-xs font-mono text-gray-400"><div className="text-red-400">POW: {battleState.enPower}</div><div className="font-black text-xl text-white/20 italic">VS</div><div className="text-blue-400">POW: {battleState.myPower}</div></div>
                             <div className="flex flex-col items-center gap-2">
-                                <div className={`flex gap-2 transition-transform duration-300 ${damageAnim.active && damageAnim.target === 'PLAYER' ? 'animate-shake' : ''}`}>
-                                    {battleState.myTeam.map((c, i) => (
-                                        <div key={i} className="scale-90 -mx-2 md:scale-100 md:mx-2"><Card card={c} size="small" showPower={false} isRental={c.isRental} level={c.level} /></div>
-                                    ))}
+                                <div className={`flex justify-center -space-x-2 transition-transform duration-300 ${damageAnim.active && damageAnim.target === 'PLAYER' ? 'animate-shake' : ''}`}>
+                                    {battleState.myTeam.map((c, i) => <div key={i} className="transform scale-90 md:scale-100"><Card card={c} size="small" showPower={false} isRental={c.isRental} level={c.level} /></div>)}
                                 </div>
-                                <div className="w-full max-w-md bg-gray-800 h-6 rounded-full border border-gray-600 relative overflow-hidden mt-2">
-                                    <div className="absolute top-0 left-0 h-full bg-blue-500 transition-all duration-500" style={{width: `${myHpPercent}%`}}></div>
-                                    <div className="absolute inset-0 flex items-center justify-center text-xs font-bold shadow-black drop-shadow-md">{battleState.myHp} / {battleState.myMaxHp}</div>
-                                </div>
+                                <div className="w-full max-w-md bg-gray-800 h-4 rounded-full border border-gray-600 relative overflow-hidden mt-1"><div className="absolute top-0 left-0 h-full bg-blue-500 transition-all duration-500" style={{width: `${myHpPercent}%`}}></div><div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold shadow-black drop-shadow-md">{battleState.myHp}/{battleState.myMaxHp}</div></div>
                             </div>
                         </div>
-                        <div className="mt-4 flex justify-center pb-8 z-20 shrink-0 h-16">
+                        <div className="mt-2 flex justify-center pb-24 z-20 shrink-0 h-16">
                             {battleState.phase === 'PLAYER_TURN' && <Button onClick={startTimingRound} variant="danger" className="px-12 py-4 text-xl font-black shadow-lg animate-pulse">ATTACK!</Button>}
                             {battleState.phase === 'ENEMY_TURN' && <div className="text-red-400 font-bold animate-pulse">相手の攻撃中...</div>}
                         </div>
@@ -830,11 +733,11 @@
                 return (
                     <div className="h-full flex flex-col relative">
                         <div className="flex justify-between items-center mb-4 shrink-0">
-                            <Button onClick={() => setView('HOME')} variant="secondary" size="small"><RotateCcw size={16} /> 戻る</Button>
-                            <div className="text-right text-xs text-gray-400">タップで詳細 / 覚醒</div>
+                            <Button onClick={() => setView('HOME')} variant="secondary" size="small"><Icons.RotateCcw size={16} /> 戻る</Button>
+                            <div className="text-right text-xs text-gray-400">詳細・覚醒</div>
                         </div>
-                        <div className="flex-1 overflow-y-auto pr-2 pb-10">
-                            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                        <div className="flex-1 overflow-y-auto pb-32 scroll-container">
+                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
                                 {sortedCards.map(card => {
                                     const count = collection[card.id] || 0;
                                     return (
@@ -850,67 +753,40 @@
                 );
             };
 
-            const renderMissionModal = () => (
-                <div className="absolute inset-0 bg-black/80 z-50 flex items-center justify-center p-4 animate-in fade-in" style={{zIndex: 10001}}>
-                    <div className="bg-gray-800 w-full max-w-md rounded-xl border border-gray-600 p-6">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold flex items-center gap-2"><Calendar className="text-orange-400" /> 今日のクエスト</h2>
-                            <button onClick={() => setShowMissions(false)}><X /></button>
-                        </div>
-                        <div className="text-xs text-gray-400 mb-4 text-center">毎日0時にリセットされます</div>
-                        <div className="space-y-3">
-                            {activeMissions.map(m => {
-                                const current = missionProgress[m.id] || 0;
-                                const isDone = current >= m.target;
-                                const isClaimed = claimedMissions.includes(m.id);
-                                return (
-                                    <div key={m.id} className="bg-gray-900 p-3 rounded border border-gray-700 flex justify-between items-center">
-                                        <div>
-                                            <div className="font-bold text-sm">{m.text}</div>
-                                            <div className="text-xs text-gray-400">進捗: {Math.min(current, m.target)} / {m.target}</div>
-                                        </div>
-                                        <div>
-                                            {isClaimed ? <span className="text-gray-500 text-xs font-bold px-3 py-1 border border-gray-600 rounded">受取済</span> :
-                                                isDone ? <Button onClick={() => claimMission(m)} variant="gold" size="small" className="text-xs py-1">受取 {m.reward}G</Button> :
-                                                    <span className="text-gray-600 text-xs px-2">未達成</span>}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
+            const renderHome = () => (
+                <div className="flex flex-col items-center justify-center h-full space-y-6 animate-fadeIn relative pb-safe">
+                    <div className="absolute top-4 right-4"><button onClick={() => setShowMissions(true)} className="bg-gray-800 p-2 rounded-full border border-green-500 text-green-400 hover:bg-gray-700 relative flex items-center gap-2"><Icons.Calendar size={18}/><span className="text-xs font-bold">クエスト</span></button></div>
+                    <div className="text-center space-y-2"><h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 filter drop-shadow-lg">ANIMAL<br/>CHRONICLE</h1><p className="text-gray-400 text-sm">究極の生態系を築き上げろ</p></div>
+                    <div className="w-full max-w-md bg-gray-800 rounded-full h-12 border border-gray-600 relative overflow-hidden flex items-center px-4 cursor-pointer group" onClick={() => setView('GACHA')}><div className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-blue-900 to-blue-600 transition-all duration-300" style={{width: `${freePackProgress}%`}}></div><div className="absolute left-0 top-0 bottom-0 w-full flex items-center justify-between px-4 z-10"><div className="flex items-center gap-2 font-bold text-white drop-shadow-md"><Icons.Timer size={20}/>{freePackProgress >= 100 ? "FREE PACK READY!" : "パワー充填中..."}</div><div className="text-xs font-mono text-white/80">{freePackProgress >= 100 ? "100%" : `あと ${timeUntilFreePack}`}</div></div></div>
+                    <div className="grid grid-cols-2 gap-4 w-full max-w-md"><div className="bg-gray-800 p-3 rounded-xl border border-gray-700 flex flex-col items-center justify-center text-center"><span className="text-gray-400 text-xs mb-1">COLLECTION</span><span className="text-2xl font-bold text-white">{Object.keys(collection).length} / {ALL_CARDS.length}</span></div><div className="bg-gray-800 p-3 rounded-xl border border-gray-700 flex flex-col items-center justify-center text-center"><span className="text-gray-400 text-xs mb-1">MONEY</span><span className="text-2xl font-bold text-yellow-400 flex items-center gap-1"><Icons.Coins size={20} /> {coins}</span></div></div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-lg px-4">
+                        <Button onClick={() => setView('GACHA')} variant="gold" className="py-4 text-lg flex-col"><div className="flex items-center gap-2"><Icons.Sparkles /> スカウト</div></Button>
+                        <Button onClick={() => { setView('DECK_SELECT'); setSelectedDeck([]); }} variant="danger" className="py-4 text-lg flex-col"><div className="flex items-center gap-2"><Icons.Zap /> バトル</div></Button>
+                        <Button onClick={() => { setView('MARKET'); refreshShop(); createAuction(); updateMission('VISIT_MARKET'); }} variant="green" className="py-4 text-lg flex-col"><div className="flex items-center gap-2"><Icons.ShoppingBag /> マーケット</div></Button>
+                        <Button onClick={() => setView('COLLECTION')} variant="primary" className="py-4 text-lg flex-col"><div className="flex items-center gap-2"><Icons.Search /> コレクション</div></Button>
                     </div>
                 </div>
             );
 
-            const renderHome = () => (
-                <div className="flex flex-col items-center justify-center h-full space-y-6 animate-fadeIn relative">
-                    {showMissions && renderMissionModal()}
-                    <div className="absolute top-4 right-4"><button onClick={() => setShowMissions(true)} className="bg-gray-800 p-2 rounded-full border border-green-500 text-green-400 hover:bg-gray-700 relative flex items-center gap-2"><Calendar size={18}/><span className="text-xs font-bold">クエスト</span></button></div>
-                    <div className="text-center space-y-2"><h1 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 filter drop-shadow-lg">ANIMAL CHRONICLE</h1><p className="text-gray-400 text-lg">究極の生態系を築き上げろ</p></div>
-                    <div className="w-full max-w-md bg-gray-800 rounded-full h-12 border border-gray-600 relative overflow-hidden flex items-center px-4 cursor-pointer group" onClick={() => setView('GACHA')}><div className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-blue-900 to-blue-600 transition-all duration-300" style={{width: `${freePackProgress}%`}}></div><div className="absolute left-0 top-0 bottom-0 w-full flex items-center justify-between px-4 z-10"><div className="flex items-center gap-2 font-bold text-white drop-shadow-md"><Timer size={20}/>{freePackProgress >= 100 ? "FREE PACK READY!" : "パックパワー充填中..."}</div><div className="text-xs font-mono text-white/80">{freePackProgress >= 100 ? "100%" : `あと ${timeUntilFreePack}`}</div></div></div>
-                    <div className="grid grid-cols-2 gap-4 w-full max-w-md"><div className="bg-gray-800 p-3 rounded-xl border border-gray-700 flex flex-col items-center justify-center text-center"><span className="text-gray-400 text-xs mb-1">COLLECTION</span><span className="text-2xl font-bold text-white">{Object.keys(collection).length} / {ALL_CARDS.length}</span></div><div className="bg-gray-800 p-3 rounded-xl border border-gray-700 flex flex-col items-center justify-center text-center"><span className="text-gray-400 text-xs mb-1">MONEY</span><span className="text-2xl font-bold text-yellow-400 flex items-center gap-1"><Coins size={20} /> {coins}</span></div></div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-lg"><Button onClick={() => setView('GACHA')} variant="gold" className="py-6 text-xl flex-col gap-1"><div className="flex items-center gap-2"><Sparkles /> スカウト</div></Button><Button onClick={() => { setView('DECK_SELECT'); setSelectedDeck([]); }} variant="danger" className="py-6 text-xl flex-col gap-1"><div className="flex items-center gap-2"><Zap /> バトル</div></Button><Button onClick={() => { setView('MARKET'); refreshShop(); createAuction(); updateMission('VISIT_MARKET'); }} variant="green" className="py-6 text-xl flex-col gap-1"><div className="flex items-center gap-2"><ShoppingBag /> マーケット</div></Button><Button onClick={() => setView('COLLECTION')} variant="primary" className="py-6 text-xl flex-col gap-1"><div className="flex items-center gap-2"><Search /> コレクション</div></Button></div>
-                </div>
-            );
             const renderGacha = () => (
                 <div className="flex flex-col items-center h-full relative">
-                    <div className="w-full flex justify-between items-center mb-6"><Button onClick={() => { setView('HOME'); setPackResult(null); setPackState('IDLE'); }} variant="secondary" size="small"><RotateCcw size={16} /> 戻る</Button><div className="bg-gray-800 px-4 py-2 rounded-full border border-yellow-600 text-yellow-400 font-bold">{coins} G</div></div>
+                    <div className="w-full flex justify-between items-center mb-6"><Button onClick={() => { setView('HOME'); setPackResult(null); setPackState('IDLE'); }} variant="secondary" size="small"><Icons.RotateCcw size={16} /> 戻る</Button><div className="bg-gray-800 px-4 py-2 rounded-full border border-yellow-600 text-yellow-400 font-bold">{coins} G</div></div>
                     {packState === 'IDLE' && <div className="flex-1 flex flex-col items-center justify-center space-y-8 w-full max-w-md animate-in fade-in"><Button onClick={() => openPack(1, true)} variant="primary" className="w-full mt-2 z-10" disabled={freePackProgress < 100}>{freePackProgress >= 100 ? "✨ 無料で開封！ ✨" : `チャージ中...`}</Button><div className="flex flex-col gap-2 w-full"><Button onClick={() => openPack(1)} variant="gold" disabled={coins < 500} className="w-full py-4 justify-between text-lg"><span>1パック (5枚)</span><span>500 G</span></Button><Button onClick={() => openPack(10)} variant="gold" disabled={coins < 5000} className="w-full py-4 justify-between border border-white/20 text-lg"><span>10パック (50枚)</span><span>5,000 G</span></Button></div></div>}
                     {packState === 'SHOW_PACK' && <PackOpener onOpen={finishPackOpening} />}
-                    {packState === 'SHOW_RESULTS' && pendingPackCards && <div className="flex-1 flex flex-col items-center w-full overflow-hidden"><div className="flex-1 overflow-y-auto w-full px-4"><div className="flex flex-wrap justify-center gap-3">{pendingPackCards.map((card, idx) => (<div key={idx} className="animate-in zoom-in duration-300" style={{animationDelay: `${idx * 100}ms`}}><Card card={card} isNew={collection[card.id] === 1} size="small" /></div>))}</div></div><div className="mt-4 pb-4 flex gap-4 shrink-0"><Button onClick={() => { setPackState('IDLE'); setPendingPackCards(null); }} variant="secondary">閉じる</Button></div></div>}
+                    {packState === 'SHOW_RESULTS' && pendingPackCards && <div className="flex-1 flex flex-col items-center w-full overflow-hidden"><div className="flex-1 overflow-y-auto w-full px-4 pb-32 scroll-container"><div className="flex flex-wrap justify-center gap-3">{pendingPackCards.map((card, idx) => (<div key={idx} className="animate-in zoom-in duration-300" style={{animationDelay: `${idx * 100}ms`}}><Card card={card} isNew={collection[card.id] === 1} size="small" /></div>))}</div></div><div className="mt-4 pb-safe flex gap-4 shrink-0"><Button onClick={() => { setPackState('IDLE'); setPendingPackCards(null); }} variant="secondary">閉じる</Button></div></div>}
                 </div>
             );
+
             const renderMarket = () => (
-                <div className="h-full flex flex-col"><div className="flex justify-between items-center mb-4 shrink-0"><Button onClick={() => setView('HOME')} variant="secondary" size="small"><RotateCcw size={16} /> 戻る</Button><div className="bg-gray-800 px-4 py-1 rounded-full border border-yellow-600 text-yellow-400 font-bold flex items-center gap-2"><Coins size={16} /> {coins} G</div></div><div className="flex gap-2 mb-4 bg-gray-800 p-1 rounded-lg shrink-0"><button onClick={() => setMarketTab('SHOP')} className={`flex-1 py-2 rounded font-bold transition-colors ${marketTab === 'SHOP' ? 'bg-emerald-600 text-white' : 'text-gray-400 hover:bg-gray-700'}`}>ショップ</button><button onClick={() => setMarketTab('AUCTION')} className={`flex-1 py-2 rounded font-bold transition-colors ${marketTab === 'AUCTION' ? 'bg-orange-600 text-white' : 'text-gray-400 hover:bg-gray-700'}`}>オークション</button></div><div className="flex-1 overflow-y-auto">{marketTab === 'SHOP' && <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pb-10">{shopItems.map(card => (<div key={card.id} className="flex flex-col gap-2"><Card card={card} size="small" className="mx-auto" /><Button onClick={() => buyShopItem(card)} variant="secondary" className="text-sm py-1">購入 {RARITY_CONFIG[card.rarity].buy} G</Button></div>))}<div className="col-span-full mt-8 border-t border-gray-700 pt-4 text-center"><Button onClick={refreshShop} variant="secondary" className="mx-auto text-xs">更新</Button></div></div>}{marketTab === 'AUCTION' && <div className="space-y-4 pb-10"><div className="flex justify-end"><Button onClick={createAuction} variant="primary" className="text-xs">探索</Button></div>{auctionItems.map(item => (<div key={item.id} className="bg-gray-800 p-4 rounded-lg border border-gray-600 flex gap-4 items-center"><Card card={item.card} size="small" /><div className="flex-1 min-w-0"><h3 className="font-bold truncate">{item.card.name}</h3><div className="text-yellow-400 font-bold">{item.currentBid} G</div>{item.endTime <= Date.now() ? (item.lastBidder === 'YOU' ? <Button onClick={() => claimAuction(item)} variant="green">受取</Button> : <div>終了</div>) : <Button onClick={() => placeBid(item.id, item.currentBid)} variant="gold">入札</Button>}</div></div>))}</div>}</div></div>
+                <div className="h-full flex flex-col"><div className="flex justify-between items-center mb-4 shrink-0"><Button onClick={() => setView('HOME')} variant="secondary" size="small"><Icons.RotateCcw size={16} /> 戻る</Button><div className="bg-gray-800 px-4 py-1 rounded-full border border-yellow-600 text-yellow-400 font-bold flex items-center gap-2"><Icons.Coins size={16} /> {coins} G</div></div><div className="flex gap-2 mb-4 bg-gray-800 p-1 rounded-lg shrink-0"><button onClick={() => setMarketTab('SHOP')} className={`flex-1 py-2 rounded font-bold transition-colors ${marketTab === 'SHOP' ? 'bg-emerald-600 text-white' : 'text-gray-400 hover:bg-gray-700'}`}>ショップ</button><button onClick={() => setMarketTab('AUCTION')} className={`flex-1 py-2 rounded font-bold transition-colors ${marketTab === 'AUCTION' ? 'bg-orange-600 text-white' : 'text-gray-400 hover:bg-gray-700'}`}>オークション</button></div><div className="flex-1 overflow-y-auto pb-32 scroll-container">{marketTab === 'SHOP' && <div className="grid grid-cols-2 md:grid-cols-3 gap-4">{shopItems.map(card => (<div key={card.id} className="flex flex-col gap-2"><Card card={card} size="small" className="mx-auto" /><Button onClick={() => buyShopItem(card)} variant="secondary" className="text-sm py-1">購入 {RARITY_CONFIG[card.rarity].buy} G</Button></div>))}</div>}{marketTab === 'AUCTION' && <div className="space-y-4"><div className="flex justify-end"><Button onClick={createAuction} variant="primary" className="text-xs">探索</Button></div>{auctionItems.map(item => (<div key={item.id} className="bg-gray-800 p-4 rounded-lg border border-gray-600 flex gap-4 items-center"><Card card={item.card} size="small" /><div className="flex-1 min-w-0"><h3 className="font-bold truncate">{item.card.name}</h3><div className="text-yellow-400 font-bold">{item.currentBid} G</div>{item.endTime <= Date.now() ? (item.lastBidder === 'YOU' ? <Button onClick={() => claimAuction(item)} variant="green">受取</Button> : <div>終了</div>) : <Button onClick={() => placeBid(item.id, item.currentBid)} variant="gold">入札</Button>}</div></div>))}</div>}</div></div>
             );
 
             return (
-                <div className="w-full h-full max-w-6xl mx-auto bg-slate-900 relative shadow-2xl overflow-hidden flex flex-col">
-                    <div className="absolute inset-0 z-0 opacity-10 pointer-events-none">
-                        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,_rgba(76,29,149,0.5),_rgba(15,23,42,1))]"></div>
-                        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
-                    </div>
-                    <div className="relative z-10 flex-1 p-6 overflow-hidden">
+                <div className="w-full h-full bg-slate-900 relative shadow-2xl overflow-hidden flex flex-col font-sans">
+                    {/* Backgrounds */}
+                    <div className="absolute inset-0 z-0 opacity-20 pointer-events-none bg-[radial-gradient(circle_at_50%_50%,_rgba(76,29,149,0.5),_rgba(15,23,42,1))]"></div>
+                    
+                    <div className="relative z-10 flex-1 p-4 overflow-hidden">
                         {view === 'HOME' && renderHome()}
                         {view === 'GACHA' && renderGacha()}
                         {view === 'COLLECTION' && renderCollection()}
@@ -919,41 +795,53 @@
                         {view === 'MARKET' && renderMarket()}
                     </div>
 
-                    {/* Modal */}
+                    {/* Missions Modal */}
+                    {showMissions && (
+                        <div className="fixed inset-0 bg-black/80 z-[9998] flex items-center justify-center p-4 animate-in fade-in" onClick={() => setShowMissions(false)}>
+                            <div className="bg-gray-800 w-full max-w-md rounded-xl border border-gray-600 p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-xl font-bold flex items-center gap-2"><Icons.Calendar className="text-orange-400" /> 今日のクエスト</h2>
+                                    <button onClick={() => setShowMissions(false)}><Icons.X /></button>
+                                </div>
+                                <div className="space-y-3">
+                                    {activeMissions.map(m => {
+                                        const current = missionProgress[m.id] || 0;
+                                        const isDone = current >= m.target;
+                                        const isClaimed = claimedMissions.includes(m.id);
+                                        return (
+                                            <div key={m.id} className="bg-gray-900 p-3 rounded border border-gray-700 flex justify-between items-center">
+                                                <div><div className="font-bold text-sm">{m.text}</div><div className="text-xs text-gray-400">進捗: {Math.min(current, m.target)} / {m.target}</div></div>
+                                                <div>{isClaimed ? <span className="text-gray-500 text-xs font-bold px-3 py-1 border border-gray-600 rounded">受取済</span> : isDone ? <Button onClick={() => claimMission(m)} variant="gold" size="small" className="text-xs py-1">受取 {m.reward}G</Button> : <span className="text-gray-600 text-xs px-2">未達成</span>}</div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Card Detail Modal */}
                     {selectedCard && (
-                        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex flex-col items-center justify-center p-4 animate-in fade-in" onClick={() => setSelectedCard(null)}>
+                        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[9999] flex flex-col items-center justify-center p-4 animate-in zoom-in" onClick={() => setSelectedCard(null)}>
                             <div className="bg-gray-800 p-6 rounded-xl border border-gray-600 max-w-sm w-full flex flex-col items-center shadow-2xl" onClick={e => e.stopPropagation()}>
                                 <div className="flex w-full justify-between items-center mb-4">
                                     <h3 className="text-xl font-bold text-white">カード詳細</h3>
-                                    <button onClick={() => setSelectedCard(null)} className="text-gray-400 hover:text-white"><X /></button>
+                                    <button onClick={() => setSelectedCard(null)} className="text-gray-400 hover:text-white"><Icons.X /></button>
                                 </div>
                                 <Card card={selectedCard} showPower={true} level={cardLevels[selectedCard.id] || 0} />
                                 
                                 <div className="w-full mt-6 space-y-4">
                                     <div className="grid grid-cols-2 gap-3 w-full">
-                                        <div className="text-center bg-gray-900 p-2 rounded">
-                                            <div className="text-xs text-gray-500">所有数</div>
-                                            <div className="text-xl font-bold text-white">{collection[selectedCard.id]}枚</div>
-                                        </div>
-                                        <div className="text-center bg-gray-900 p-2 rounded">
-                                            <div className="text-xs text-gray-500">売却価格</div>
-                                            <div className="text-xl font-bold text-yellow-400">{RARITY_CONFIG[selectedCard.rarity].sell} G</div>
-                                        </div>
+                                        <div className="text-center bg-gray-900 p-2 rounded"><div className="text-xs text-gray-500">所有数</div><div className="text-xl font-bold text-white">{collection[selectedCard.id]}枚</div></div>
+                                        <div className="text-center bg-gray-900 p-2 rounded"><div className="text-xs text-gray-500">売却価格</div><div className="text-xl font-bold text-yellow-400">{RARITY_CONFIG[selectedCard.rarity].sell} G</div></div>
                                     </div>
-
-                                    {/* Level Up UI */}
                                     {collection[selectedCard.id] >= 3 && (
                                         <div className="bg-yellow-900/30 p-3 rounded border border-yellow-600/50 text-center">
                                             <div className="text-xs text-yellow-200 mb-1">覚醒可能！(3枚消費)</div>
-                                            <Button onClick={() => levelUpCard(selectedCard)} variant="gold" className="w-full text-sm">
-                                                レベルアップ (Lv.{ (cardLevels[selectedCard.id] || 0) + 1 } &rarr; { (cardLevels[selectedCard.id] || 0) + 2 })
-                                            </Button>
+                                            <Button onClick={() => levelUpCard(selectedCard)} variant="gold" className="w-full text-sm">覚醒 (Lv.{ (cardLevels[selectedCard.id] || 0) + 1 } &rarr; { (cardLevels[selectedCard.id] || 0) + 2 })</Button>
                                         </div>
                                     )}
-
-                                    <Button onClick={() => sellCard(selectedCard)} variant="secondary" className="w-full border-red-900 hover:bg-red-900/50 text-red-300" disabled={collection[selectedCard.id] <= 0}>
-                                        売却してコインにする
-                                    </Button>
+                                    <Button onClick={() => sellCard(selectedCard)} variant="secondary" className="w-full border-red-900 hover:bg-red-900/50 text-red-300" disabled={collection[selectedCard.id] <= 0}>売却してコインにする</Button>
                                 </div>
                             </div>
                         </div>
@@ -965,12 +853,8 @@
                             <div className="bg-gradient-to-b from-yellow-600 to-yellow-800 p-8 rounded-2xl border-4 border-yellow-400 text-center max-w-sm w-full shadow-2xl">
                                 <h2 className="text-3xl font-black text-white mb-4 drop-shadow-md">LOGIN BONUS!</h2>
                                 <div className="text-6xl mb-6 animate-bounce">🎁</div>
-                                <div className="text-2xl font-bold text-white mb-8">
-                                    <span className="text-yellow-200">{loginBonus}</span> G GET!
-                                </div>
-                                <Button onClick={() => { setCoins(c => c + loginBonus); setLoginBonus(null); }} variant="gold" className="w-full py-4 text-xl shadow-xl">
-                                    受け取る
-                                </Button>
+                                <div className="text-2xl font-bold text-white mb-8"><span className="text-yellow-200">{loginBonus}</span> G GET!</div>
+                                <Button onClick={() => { setCoins(c => c + loginBonus); setLoginBonus(null); }} variant="gold" className="w-full py-4 text-xl shadow-xl">受け取る</Button>
                             </div>
                         </div>
                     )}
