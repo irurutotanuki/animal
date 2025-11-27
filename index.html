@@ -468,6 +468,10 @@
             const [deckSelectPage, setDeckSelectPage] = useState(0);
             const [collectionSearchTerm, setCollectionSearchTerm] = useState("");
             
+            // Deck Filter & Sort State
+            const [deckFilter, setDeckFilter] = useState('ALL');
+            const [deckSort, setDeckSort] = useState('POWER_DESC');
+
             const ITEMS_PER_PAGE_DECK = 10; 
 
             useEffect(() => {
@@ -867,7 +871,7 @@
             );
 
             const renderDeckSelect = () => {
-                const myCards = [];
+                let myCards = []; // const -> let に変更してフィルタリング可能に
                 Object.keys(collection).forEach(key => {
                     if (collection[key] > 0) {
                         const [id, varId] = key.split('_').map(Number);
@@ -879,13 +883,27 @@
                     }
                 });
                 
+                // フィルタリング処理
+                if (deckFilter !== 'ALL') {
+                    myCards = myCards.filter(c => c.variantId.toString() === deckFilter);
+                }
+
+                // ソート処理
                 myCards.sort((a, b) => {
                     const getPower = (c) => {
                          const variant = VARIANT_CONFIG[c.variantId] || VARIANT_CONFIG[1];
                          const level = cardLevels[c.id] || 0;
                          return Math.floor(c.power * (1 + level * 0.1) * variant.powMod);
                     };
-                    return getPower(b) - getPower(a);
+
+                    if (deckSort === 'POWER_ASC') {
+                        return getPower(a) - getPower(b);
+                    } else if (deckSort === 'NEWEST') {
+                        return b.id - a.id; // IDが大きい順（リストの後ろの方）
+                    } else {
+                        // POWER_DESC (Default)
+                        return getPower(b) - getPower(a);
+                    }
                 });
 
                 const totalPages = Math.ceil(myCards.length / ITEMS_PER_PAGE_DECK);
@@ -897,6 +915,30 @@
                             <Button onClick={() => setView('HOME')} variant="secondary" size="small"><Icons.Home size={16}/> 戻る</Button>
                             <h2 className="text-lg font-bold text-white">出撃デッキ選択</h2>
                         </div>
+
+                        {/* フィルタ & ソート UI */}
+                        <div className="flex gap-2 mb-2 overflow-x-auto pb-1 no-scrollbar">
+                            <select 
+                                className="bg-gray-800 text-white text-xs p-2 rounded border border-gray-600 outline-none focus:border-yellow-500"
+                                value={deckFilter}
+                                onChange={(e) => { setDeckFilter(e.target.value); setDeckSelectPage(0); }}
+                            >
+                                <option value="ALL">すべての属性</option>
+                                {Object.values(VARIANT_CONFIG).map(v => (
+                                    <option key={v.id} value={v.id.toString()}>{v.name} {v.suffix}</option>
+                                ))}
+                            </select>
+                            <select 
+                                className="bg-gray-800 text-white text-xs p-2 rounded border border-gray-600 outline-none focus:border-yellow-500"
+                                value={deckSort}
+                                onChange={(e) => { setDeckSort(e.target.value); setDeckSelectPage(0); }}
+                            >
+                                <option value="POWER_DESC">強さ (高い順)</option>
+                                <option value="POWER_ASC">強さ (低い順)</option>
+                                <option value="NEWEST">新着 (No.順)</option>
+                            </select>
+                        </div>
+
                         <div className="flex justify-center gap-2 mb-4 min-h-[100px] bg-gray-800/50 p-2 rounded border border-dashed border-gray-600">
                             {selectedDeck.map((c,i) => <div key={i} onClick={() => setSelectedDeck(prev => prev.filter((_,idx)=>idx!==i))} className="relative"><Card card={c} size="small" level={cardLevels[c.id]||0} variantId={c.variantId}/></div>)}
                             {selectedDeck.length < 3 && <div className="text-gray-500 text-xs flex items-center">3体選択</div>}
@@ -906,16 +948,20 @@
                              <Button onClick={startRankBattle} variant="danger" disabled={selectedDeck.length !== 3} className="text-sm flex-col leading-tight ring-2 ring-yellow-400"><span>ランク戦</span><span className="text-[10px] text-yellow-300 font-bold">(Rank {playerRank}〜)</span></Button>
                         </div>
                         <div className="flex-1 overflow-y-auto pb-32">
-                            <div className="grid grid-cols-3 gap-2">
-                                {paginatedCards.map((card, idx) => {
-                                    const isSelected = selectedDeck.some(c=>c.id===card.id && c.variantId===card.variantId);
-                                    return (
-                                        <div key={`${card.id}-${card.variantId}-${idx}`} onClick={() => { if(selectedDeck.length < 3 && !isSelected) setSelectedDeck([...selectedDeck, card]); }}>
-                                            <Card card={card} size="small" isSelected={isSelected} level={cardLevels[card.id]||0} variantId={card.variantId} />
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                            {paginatedCards.length === 0 ? (
+                                <div className="text-center text-gray-500 mt-8">条件に合うカードがありません</div>
+                            ) : (
+                                <div className="grid grid-cols-3 gap-2">
+                                    {paginatedCards.map((card, idx) => {
+                                        const isSelected = selectedDeck.some(c=>c.id===card.id && c.variantId===card.variantId);
+                                        return (
+                                            <div key={`${card.id}-${card.variantId}-${idx}`} onClick={() => { if(selectedDeck.length < 3 && !isSelected) setSelectedDeck([...selectedDeck, card]); }}>
+                                                <Card card={card} size="small" isSelected={isSelected} level={cardLevels[card.id]||0} variantId={card.variantId} />
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
                         <div className="mb-24"><PaginationControls page={deckSelectPage} totalPages={totalPages} onPrev={()=>setDeckSelectPage(p=>Math.max(0,p-1))} onNext={()=>setDeckSelectPage(p=>Math.min(totalPages-1,p+1))} /></div>
                      </div>
