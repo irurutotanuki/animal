@@ -273,7 +273,8 @@
                 const animate = () => {
                     if (!isActive) return;
                     const elapsed = Date.now() - startTime.current;
-                    const duration = 1500;
+                    // 1500ms -> 2000ms に変更して少しゆっくりに
+                    const duration = 2000;
                     const progress = (elapsed % duration) / duration;
                     setSize(200 * (1 - progress));
                     reqRef.current = requestAnimationFrame(animate);
@@ -288,10 +289,13 @@
                 const target = 50;
                 const diff = Math.abs(size - target);
                 let multiplier = 1.0, label = "MISS...", color = "text-gray-400";
-                if (diff < 15) { multiplier = 2.0; label = "PERFECT!!"; color = "text-yellow-400"; }
-                else if (diff < 40) { multiplier = 1.5; label = "GREAT!"; color = "text-green-400"; }
-                else if (diff < 70) { multiplier = 1.1; label = "GOOD"; color = "text-blue-400"; }
+                
+                // 判定を甘く調整
+                if (diff < 20) { multiplier = 2.0; label = "PERFECT!!"; color = "text-yellow-400"; } // 15 -> 20
+                else if (diff < 50) { multiplier = 1.5; label = "GREAT!"; color = "text-green-400"; } // 40 -> 50
+                else if (diff < 90) { multiplier = 1.1; label = "GOOD"; color = "text-blue-400"; } // 70 -> 90
                 else { multiplier = 0.8; label = "BAD..."; color = "text-red-400"; }
+                
                 setResult({ multiplier, label, color });
                 setTimeout(() => onComplete(multiplier, label), 1000);
             };
@@ -320,8 +324,9 @@
             
             useEffect(() => {
                 const interval = setInterval(() => {
+                    // 80ms -> 150ms に変更して目押ししやすく
                     setReels(prev => prev.map((val, i) => spinning[i] ? (val + 1) % symbols.length : val));
-                }, 80);
+                }, 150);
                 return () => clearInterval(interval);
             }, [spinning]);
 
@@ -738,12 +743,15 @@
                     const enemyLevel = Math.max(0, Math.floor((playerAvgPower - base.power)/1000));
                     const mult = 1 + (enemyLevel * 0.1);
                     
+                    // 通常バトルの敵を弱体化 (ステータス 0.7倍)
+                    const normalBattleNerf = 0.7;
+
                     enemyTeam.push({ 
                         ...base, 
                         variantId, 
-                        hp: Math.floor(base.hp * mult * variant.hpMod * (isRank ? 10 : 1)), 
-                        power: Math.floor(base.power * mult * variant.powMod),
-                        currentHp: Math.floor(base.hp * mult * variant.hpMod * (isRank ? 10 : 1)),
+                        hp: Math.floor(base.hp * mult * variant.hpMod * (isRank ? 10 : normalBattleNerf)), 
+                        power: Math.floor(base.power * mult * variant.powMod * (isRank ? 1 : normalBattleNerf)),
+                        currentHp: Math.floor(base.hp * mult * variant.hpMod * (isRank ? 10 : normalBattleNerf)),
                         level: enemyLevel
                     });
                 }
