@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>アニマル・クロニクル 5150 - Ver.2.1</title>
+    <title>アニマル・クロニクル 5150 - Ver.2.2</title>
     <!-- React & ReactDOM -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -85,11 +85,11 @@
 
         const PACK_TYPES = [
             { id: 'NORMAL', name: 'ノーマルパック', price: 500, desc: '基本的なパック。運試しに。', color: 'from-slate-700 to-slate-900', borderColor: 'border-slate-500' },
-            { id: 'LAVA', name: '溶岩パック', price: 1000, desc: 'LAVA属性が出やすい！(50%)', color: 'from-red-900 to-orange-900', borderColor: 'border-red-500', variantRate: { 3: 0.5 } },
-            { id: 'FROZEN', name: '氷結パック', price: 1000, desc: 'FROZEN属性が出やすい！(50%)', color: 'from-cyan-900 to-blue-900', borderColor: 'border-cyan-400', variantRate: { 8: 0.5 } },
-            { id: 'THUNDER', name: '雷鳴パック', price: 1200, desc: 'THUNDER属性が出やすい！(50%)', color: 'from-yellow-900 to-amber-900', borderColor: 'border-yellow-400', variantRate: { 9: 0.5 } },
-            { id: 'MECHA', name: '機械仕掛けのパック', price: 1500, desc: 'MECHA属性が出やすい！(50%)', color: 'from-gray-800 to-zinc-800', borderColor: 'border-gray-400', variantRate: { 5: 0.5 } },
-            { id: 'SHADOW', name: '暗黒パック', price: 2000, desc: 'SHADOW属性が出やすい！(50%)', color: 'from-purple-900 to-black', borderColor: 'border-purple-600', variantRate: { 6: 0.5 } },
+            { id: 'LAVA', name: '溶岩パック', price: 1000, desc: 'LAVA属性が出やすい！(80%)', color: 'from-red-900 to-orange-900', borderColor: 'border-red-500', variantRate: { 3: 0.8 } },
+            { id: 'FROZEN', name: '氷結パック', price: 1000, desc: 'FROZEN属性が出やすい！(80%)', color: 'from-cyan-900 to-blue-900', borderColor: 'border-cyan-400', variantRate: { 8: 0.8 } },
+            { id: 'THUNDER', name: '雷鳴パック', price: 1200, desc: 'THUNDER属性が出やすい！(80%)', color: 'from-yellow-900 to-amber-900', borderColor: 'border-yellow-400', variantRate: { 9: 0.8 } },
+            { id: 'MECHA', name: '機械仕掛けのパック', price: 1500, desc: 'MECHA属性が出やすい！(80%)', color: 'from-gray-800 to-zinc-800', borderColor: 'border-gray-400', variantRate: { 5: 0.8 } },
+            { id: 'SHADOW', name: '暗黒パック', price: 2000, desc: 'SHADOW属性が出やすい！(80%)', color: 'from-purple-900 to-black', borderColor: 'border-purple-600', variantRate: { 6: 0.8 } },
             { id: 'SECRET', name: '探求者パック', price: 3000, desc: 'シークレット(SECRET)確率5倍！', color: 'from-indigo-900 to-slate-900', borderColor: 'border-indigo-400', secretMult: 5.0 },
             { id: 'RARE_PLUS', name: 'レア以上確定パック', price: 5000, desc: 'RARE以上が必ず出現！', color: 'from-blue-800 to-blue-950', borderColor: 'border-blue-400', minRarity: 'RARE' },
             { id: 'ULTIMATE', name: '究極パック', price: 30000, desc: 'ULTIMATE以上確定！', color: 'from-red-800 to-rose-950', borderColor: 'border-rose-500', minRarity: 'ULTIMATE' },
@@ -436,6 +436,7 @@
 
         function AnimalChronicle() {
             const [coins, setCoins] = useState(1000);
+            const [playerRank, setPlayerRank] = useState(1); // プレイヤーランク
             const [collection, setCollection] = useState({});
             const [cardLevels, setCardLevels] = useState({});
             const [view, setView] = useState('HOME');
@@ -475,6 +476,7 @@
                 if (saved) {
                     const parsed = JSON.parse(saved);
                     setCoins(parsed.coins || 1000);
+                    setPlayerRank(parsed.playerRank || 1); // ランク読み込み
                     setCollection(parsed.collection || {});
                     setCardLevels(parsed.cardLevels || {});
                     setLastFreePackClaim(parsed.lastFreePackClaim || 0);
@@ -506,9 +508,9 @@
             useEffect(() => {
                 const today = new Date().toLocaleDateString('ja-JP');
                 localStorage.setItem('animalChronicleData_v2_lux', JSON.stringify({
-                    coins, collection, cardLevels, lastFreePackClaim, lastDailyReset, activeMissions, missionProgress, claimedMissions, lastLoginDate: today, idleRewards: { ...idleRewards, lastCheck: Date.now() }
+                    coins, playerRank, collection, cardLevels, lastFreePackClaim, lastDailyReset, activeMissions, missionProgress, claimedMissions, lastLoginDate: today, idleRewards: { ...idleRewards, lastCheck: Date.now() }
                 }));
-            }, [coins, collection, cardLevels, lastFreePackClaim, lastDailyReset, activeMissions, missionProgress, claimedMissions]);
+            }, [coins, playerRank, collection, cardLevels, lastFreePackClaim, lastDailyReset, activeMissions, missionProgress, claimedMissions]);
 
             useEffect(() => {
                 const interval = setInterval(() => {
@@ -724,9 +726,9 @@
                     const mult = 1 + (level * 0.1);
                     return { 
                         ...c, 
-                        hp: Math.floor(c.hp * mult * variant.hpMod), 
+                        hp: Math.floor(c.hp * mult * variant.hpMod * (isRank ? 10 : 1)), // ランク戦ならHP10倍
                         power: Math.floor(c.power * mult * variant.powMod),
-                        currentHp: Math.floor(c.hp * mult * variant.hpMod), 
+                        currentHp: Math.floor(c.hp * mult * variant.hpMod * (isRank ? 10 : 1)), 
                         level: level, 
                         isRental: c.isRental || false 
                     };
@@ -734,6 +736,15 @@
                 
                 const playerTotalPower = myTeam.reduce((sum, c) => sum + c.power, 0);
                 const playerAvgPower = playerTotalPower / 3;
+
+                // ランクに応じた敵の強さ倍率を計算
+                // ランク1: 0.6倍 (弱い) -> ランクアップで徐々に強くなる
+                let rankMultiplier = 1.0;
+                if (isRank) {
+                    rankMultiplier = 0.58 + (playerRank * 0.02); 
+                } else {
+                    rankMultiplier = 0.7; // 通常バトルは弱め固定
+                }
 
                 const enemyTeam = [];
                 for(let i=0; i<3; i++) {
@@ -743,15 +754,12 @@
                     const enemyLevel = Math.max(0, Math.floor((playerAvgPower - base.power)/1000));
                     const mult = 1 + (enemyLevel * 0.1);
                     
-                    // 通常バトルの敵を弱体化 (ステータス 0.7倍)
-                    const normalBattleNerf = 0.7;
-
                     enemyTeam.push({ 
                         ...base, 
                         variantId, 
-                        hp: Math.floor(base.hp * mult * variant.hpMod * (isRank ? 10 : normalBattleNerf)), 
-                        power: Math.floor(base.power * mult * variant.powMod * (isRank ? 1 : normalBattleNerf)),
-                        currentHp: Math.floor(base.hp * mult * variant.hpMod * (isRank ? 10 : normalBattleNerf)),
+                        hp: Math.floor(base.hp * mult * variant.hpMod * rankMultiplier * (isRank ? 10 : 1)), // ランク戦ならHP10倍
+                        power: Math.floor(base.power * mult * variant.powMod * rankMultiplier),
+                        currentHp: Math.floor(base.hp * mult * variant.hpMod * rankMultiplier * (isRank ? 10 : 1)),
                         level: enemyLevel
                     });
                 }
@@ -785,10 +793,14 @@
                 const newLogs = [...battleState.logs, `味方攻撃: ${damage} (${label})`];
                 if (newEnHp === 0) {
                     // Luxurious Rewards for Rank
-                    const baseReward = battleState.isRank ? 10000 : 1000;
+                    const baseReward = battleState.isRank ? 2000 * (1 + playerRank * 0.1) : 1000; 
                     setTimeout(() => {
-                        setBattleState(prev => ({ ...prev, enHp: newEnHp, finished: true, won: true, reward: baseReward, logs: [...newLogs, "WIN!"] }));
-                        setCoins(prev => prev + baseReward);
+                        setBattleState(prev => ({ ...prev, enHp: newEnHp, finished: true, won: true, reward: Math.floor(baseReward), logs: [...newLogs, "WIN!"] }));
+                        setCoins(prev => prev + Math.floor(baseReward));
+                        
+                        if (battleState.isRank) {
+                            setPlayerRank(prev => prev + 1);
+                        }
                         
                         // Luxurious Drop Rate for Rank
                         const dropChance = battleState.isRank ? 0.8 : 0.5;
@@ -891,7 +903,7 @@
                         </div>
                         <div className="grid grid-cols-2 gap-2 mb-4">
                              <Button onClick={startNormalBattle} variant="primary" disabled={selectedDeck.length !== 3} className="text-sm">通常バトル</Button>
-                             <Button onClick={startRankBattle} variant="danger" disabled={selectedDeck.length !== 3} className="text-sm flex-col leading-tight ring-2 ring-yellow-400"><span>ランク戦</span><span className="text-[10px] text-yellow-300 font-bold">(報酬超豪華)</span></Button>
+                             <Button onClick={startRankBattle} variant="danger" disabled={selectedDeck.length !== 3} className="text-sm flex-col leading-tight ring-2 ring-yellow-400"><span>ランク戦</span><span className="text-[10px] text-yellow-300 font-bold">(Rank {playerRank}〜)</span></Button>
                         </div>
                         <div className="flex-1 overflow-y-auto pb-32">
                             <div className="grid grid-cols-3 gap-2">
@@ -1040,7 +1052,8 @@
                     {/* Header Info */}
                     <div className="relative z-20 bg-gray-900/80 p-2 flex justify-between items-center backdrop-blur-sm border-b border-gray-700">
                         <div className="text-yellow-400 font-bold flex items-center gap-2 text-lg"><Icons.Coins /> {coins} G</div>
-                        <div className="text-xs text-gray-400">Ver 2.1</div>
+                        <div className="text-white font-mono bg-blue-900/50 px-2 rounded">RANK: {playerRank}</div>
+                        <div className="text-xs text-gray-400">Ver 2.2</div>
                     </div>
 
                     <div className="relative z-10 flex-1 p-4 overflow-hidden">
