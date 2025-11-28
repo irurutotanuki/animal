@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>アニマル・クロニクル 5150 - Ver.2.3</title>
+    <title>アニマル・クロニクル 5150 - Ver.3.2</title>
     <!-- React & ReactDOM -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -19,10 +19,19 @@
         .animate-shake { animation: shake 0.3s ease-in-out; }
         @keyframes float-up { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-50px) scale(1.5); opacity: 0; } }
         .animate-damage { animation: float-up 1s forwards ease-out; }
+        @keyframes pulse-red { 0%, 100% { box-shadow: 0 0 5px red; } 50% { box-shadow: 0 0 20px red; } }
+        .animate-pulse-red { animation: pulse-red 2s infinite; }
         
-        /* Reel Animation */
-        @keyframes reel-spin { 0% { transform: translateY(0); } 100% { transform: translateY(-100%); } }
-        .reel-spinning { animation: reel-spin 0.2s linear infinite; }
+        /* Glitch Effect for SECRET_GOD */
+        @keyframes glitch {
+            0% { clip-path: inset(50% 0 30% 0); transform: translate(-2px, 2px); }
+            20% { clip-path: inset(10% 0 60% 0); transform: translate(2px, -2px); }
+            40% { clip-path: inset(40% 0 40% 0); transform: translate(-2px, 2px); }
+            60% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -2px); }
+            80% { clip-path: inset(20% 0 50% 0); transform: translate(-2px, 2px); }
+            100% { clip-path: inset(10% 0 60% 0); transform: translate(2px, -2px); }
+        }
+        .glitch-text { animation: glitch 2s infinite linear alternate-reverse; }
 
         /* UI Utilities */
         ::-webkit-scrollbar { width: 4px; }
@@ -31,6 +40,8 @@
         body { -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         .text-shadow { text-shadow: 2px 2px 0 #000; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-gray-950 text-white h-[100dvh] w-screen overflow-hidden font-sans">
@@ -58,21 +69,37 @@
             Play: (p) => <IconBase {...p}><polygon points="5 3 19 12 5 21 5 3"/></IconBase>,
             StopCircle: (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><rect x="9" y="9" width="6" height="6"/></IconBase>,
             Box: (p) => <IconBase {...p}><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></IconBase>,
+            Flask: (p) => <IconBase {...p}><path d="M8.5 2h7"/><path d="M12 2v4"/><path d="m12 6-5 13a3 3 0 0 0 3 3h4a3 3 0 0 0 3-3l-5-13Z"/></IconBase>,
+            ShoppingBag: (p) => <IconBase {...p}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></IconBase>,
         };
 
         // --- DATA ---
+        const ANIMAL_EMOJIS = {
+            "アザトース": "🌌", "ヨルムンガンド": "🐍", "クトゥルフ": "🐙", "八咫烏": "🐦‍⬛", "白澤": "🦁", "バク": "🛌", "九頭龍": "🐲", "金鵄": "🦅", "開発者": "✋", "虚無": "🕳️", "ラプラス": "🎲", "ウロボロス": "♾️", "スカイフィッシュ": "🥢", "フラットウッズ": "👽", "モスマン": "🦋", "ジャージー": "🐴", "モンゴリアン": "🐛", "ドーバー": "👽", "イエティ": "🦍", "シャドー": "👥", "ニンゲン": "👻", "人面犬": "🐕", "シュレーディンガー": "📦", "パブロフ": "🔔", "バタフライ": "🌪️", "ライカ": "🚀", "ミッシング": "🦴", "招き猫": "🐱", "名もなき": "👤", "エラー": "👾",
+            "ライオン": "🦁", "ドラゴン": "🐉", "クジラ": "🐋", "フェニックス": "🦅", "クラーケン": "🦑", "グリフォン": "🦅", "ティラノサウルス": "🦖", "マンモス": "🦣", "サラマンダー": "🦎", "ペガサス": "🦄", "ヒドラ": "🐍", "狐": "🦊", "スフィンクス": "🗿", "ゴリラ": "🦍", "サメ": "🦈", "ペンギン": "🐧", "サイ": "🦏", "カマキリ": "🦗", "スコーピオン": "🦂", "ハヤブサ": "🦅", "アナコンダ": "🐍", "タイガー": "🐯", "ベア": "🐻", "クロコダイル": "🐊", "イール": "🐟", "フロッグ": "🐸", "カブトムシ": "🪲", "イーグル": "🦅", "ムササビ": "🐿️", "カメレオン": "🦎", "アルマジロ": "🦔", "コウモリ": "🦇", "オオカミ": "🐺", "ゾウ": "🐘", "チーター": "🐆", "ヒョウ": "🐆", "ジャガー": "🐆", "カバ": "🦛", "キリン": "🦒", "バッファロー": "🐃", "イノシシ": "🐗", "カンガルー": "🦘", "トカゲ": "🦎", "ワニ": "🐊", "ヘビ": "🐍", "コブラ": "🐍", "ワシ": "🦅", "コンドル": "🦅", "フクロウ": "🦉", "ダチョウ": "🐦", "シャチ": "🐬", "イカ": "🦑", "エイ": "🐟", "ピラニア": "🐟", "スズメバチ": "🐝", "クワガタ": "🪲", "トンボ": "🪁", "クモ": "🕷️", "ムカデ": "🐛", "パンダ": "🐼", "サル": "🐒", "オランウータン": "🦧", "ハムスター": "🐹", "ネズミ": "🐭", "リス": "🐿️", "ウサギ": "🐰", "ネコ": "🐱", "イヌ": "🐶", "ウマ": "🐴", "ウシ": "🐮", "ブタ": "🐷", "ヒツジ": "🐑", "ヤギ": "🐐", "トリ": "🐔", "ニワトリ": "🐔", "ヒヨコ": "🐥", "カモ": "🦆", "ツル": "🦢", "ハト": "🕊️", "カラス": "🐦‍⬛", "インコ": "🦜", "オウム": "🦜", "カエル": "🐸", "カメ": "🐢", "サカナ": "🐟", "タコ": "🐙", "エビ": "🦐", "カニ": "🦀", "貝": "🐚", "虫": "🐛", "チョウ": "🦋", "ハチ": "🐝", "テントウムシ": "🐞", "アリ": "🐜", "ヌー": "🐂", "ラクダ": "🐫", "アルパカ": "🦙", "ラマ": "🦙", "ロバ": "🫏", "柴犬": "🐕", "ドーベルマン": "🐕‍🦺", "土佐犬": "🐕", "セントバーナード": "🐶", "ペルシャ猫": "🐈", "三毛猫": "🐈", "黒猫": "🐈‍⬛", "ヤマネコ": "🐱", "アライグマ": "🦝", "タヌキ": "🍃", "イタチ": "🦦", "スカンク": "🦨", "ハリネズミ": "🦔", "ヤマアラシ": "🦔", "モグラ": "🕳️", "ビーバー": "🦫", "カピバラ": "🥔", "カワウソ": "🦦", "ラッコ": "🦦", "アザラシ": "🦭", "アシカ": "🦭", "セイウチ": "🦭", "ジュゴン": "🐋", "イルカ": "🐬", "マンボウ": "🐟", "アンコウ": "🔦", "タツノオトシゴ": "🐉", "ウミガメ": "🐢", "フラミンゴ": "🦩", "クジャク": "🦚", "白鳥": "🦢", "キジ": "🐦", "キツツキ": "🐦", "カワセミ": "🐦", "ツバメ": "🐦", "トノサマガエル": "🐸", "アマガエル": "🐸", "ウーパールーパー": "🦎", "イモリ": "🦎", "ヤモリ": "🦎", "リクガメ": "🐢", "モルモット": "🐹", "チンチラ": "🐭", "フェレット": "🦦", "ハツカネズミ": "🐁", "スズメ": "🐦", "金魚": "🐟", "コイ": "🐟", "メダカ": "🐟", "ドジョウ": "🐟", "ザリガニ": "🦞", "サワガニ": "🦀", "ヤドカリ": "🐚", "アサリ": "🐚", "シジミ": "🐚", "カタツムリ": "🐌", "ナメクジ": "🐌", "ミミズ": "🪱", "シロアリ": "🐜", "アブラムシ": "🐛", "ガ": "🦋", "ミツバチ": "🐝", "アシナガバチ": "🐝", "ハエ": "🪰", "カ": "🦟", "ゴキブリ": "🪳", "ノミ": "🐛", "ダニ": "🕷️", "バッタ": "🦗", "コオロギ": "🦗", "スズムシ": "🦗", "セミ": "🦗", "ホタル": "🔦", "アメンボ": "🦟", "ゲンゴロウ": "🪲", "タガメ": "🪲", "ミズカマキリ": "🦗", "ゾウリムシ": "🦠", "ミジンコ": "🦠", "アメーバ": "🦠", "プラナリア": "🪱", "クリオネ": "🧚", "クラゲ": "🪼", "ヒトデ": "⭐", "ウニ": "🦔", "ナマコ": "🥒", "フグ": "🐡", "イワシ": "🐟", "アジ": "🐟", "サバ": "🐟", "サンマ": "🐟", "タイ": "🐟", "マグロ": "🐟", "サケ": "🐟", "ラーテル": "🦡", "クズリ": "🦡", "タスマニアデビル": "👿", "マンドリル": "🐒"
+        };
+
+        const getEmoji = (name) => {
+            for (const [key, emoji] of Object.entries(ANIMAL_EMOJIS)) {
+                if (name.includes(key)) return emoji;
+            }
+            return "🐾";
+        };
+
         const RARITY_CONFIG = {
-            GOD: { color: 'from-indigo-900 via-purple-900 to-pink-900', border: 'border-yellow-400', text: 'text-yellow-300', probability: 0.001, powerBase: 9500, hpBase: 33000, cost: 10, sell: 5000, buy: 50000 },
-            LEGEND: { color: 'from-yellow-700 to-yellow-900', border: 'border-yellow-500', text: 'text-yellow-400', probability: 0.009, powerBase: 8000, hpBase: 28000, cost: 8, sell: 2000, buy: 12000 },
+            SECRET_GOD: { color: 'from-gray-900 via-purple-900 to-black', border: 'border-purple-500', text: 'text-purple-200', probability: 0.0005, powerBase: 15000, hpBase: 50000, cost: 20, sell: 50000, buy: 500000 },
+            SECRET: { color: 'from-gray-800 via-gray-700 to-gray-900', border: 'border-gray-400', text: 'text-gray-300', probability: 0.005, powerBase: 6000, hpBase: 20000, cost: 6, sell: 3000, buy: 15000 },
+            GOD: { color: 'from-indigo-900 via-purple-900 to-pink-900', border: 'border-yellow-400', text: 'text-yellow-300', probability: 0.002, powerBase: 9500, hpBase: 33000, cost: 10, sell: 5000, buy: 50000 },
+            LEGEND: { color: 'from-yellow-700 to-yellow-900', border: 'border-yellow-500', text: 'text-yellow-400', probability: 0.01, powerBase: 8000, hpBase: 28000, cost: 8, sell: 2000, buy: 12000 },
             ULTIMATE: { color: 'from-red-800 to-red-950', border: 'border-red-500', text: 'text-red-400', probability: 0.04, powerBase: 6500, hpBase: 22000, cost: 6, sell: 800, buy: 5000 },
             EPIC: { color: 'from-purple-800 to-indigo-900', border: 'border-purple-400', text: 'text-purple-300', probability: 0.10, powerBase: 4500, hpBase: 15000, cost: 5, sell: 300, buy: 2000 },
             RARE: { color: 'from-blue-700 to-blue-900', border: 'border-blue-400', text: 'text-blue-300', probability: 0.25, powerBase: 2500, hpBase: 8500, cost: 3, sell: 100, buy: 800 },
-            COMMON: { color: 'from-slate-600 to-slate-800', border: 'border-slate-400', text: 'text-slate-300', probability: 0.60, powerBase: 1000, hpBase: 3500, cost: 1, sell: 10, buy: 200 }
+            COMMON: { color: 'from-slate-600 to-slate-800', border: 'border-slate-400', text: 'text-slate-300', probability: 0.59, powerBase: 1000, hpBase: 3500, cost: 1, sell: 10, buy: 200 }
         };
 
         const VARIANT_CONFIG = {
             1: { id: 1, name: "NORMAL", suffix: "", chance: 0.80, powMod: 1.0, hpMod: 1.0, colorClass: "" },
-            2: { id: 2, name: "SECRET", suffix: "(シークレット)", chance: 0.001, powMod: 1.5, hpMod: 1.5, colorClass: "ring-4 ring-yellow-300 shadow-[0_0_15px_gold] bg-yellow-900/30" },
+            2: { id: 2, name: "Z", suffix: "Z", chance: 0.001, powMod: 1.8, hpMod: 1.8, colorClass: "ring-4 ring-black shadow-[0_0_15px_black] bg-black/50" },
             3: { id: 3, name: "LAVA", suffix: "LAVA", chance: 0.025, powMod: 1.2, hpMod: 1.0, colorClass: "ring-2 ring-red-500 shadow-[0_0_10px_red] bg-red-900/20" },
             4: { id: 4, name: "DIVER", suffix: "DIVER", chance: 0.025, powMod: 1.0, hpMod: 1.2, colorClass: "ring-2 ring-blue-400 shadow-[0_0_10px_cyan] bg-blue-900/20" },
             5: { id: 5, name: "MECHA", suffix: "Mk-II", chance: 0.025, powMod: 1.1, hpMod: 1.1, colorClass: "ring-2 ring-gray-300 shadow-[0_0_10px_silver] bg-gray-800/50" },
@@ -90,24 +117,21 @@
             { id: 'THUNDER', name: '雷鳴パック', price: 1200, desc: 'THUNDER属性が出やすい！(80%)', color: 'from-yellow-900 to-amber-900', borderColor: 'border-yellow-400', variantRate: { 9: 0.8 } },
             { id: 'MECHA', name: '機械仕掛けのパック', price: 1500, desc: 'MECHA属性が出やすい！(80%)', color: 'from-gray-800 to-zinc-800', borderColor: 'border-gray-400', variantRate: { 5: 0.8 } },
             { id: 'SHADOW', name: '暗黒パック', price: 2000, desc: 'SHADOW属性が出やすい！(80%)', color: 'from-purple-900 to-black', borderColor: 'border-purple-600', variantRate: { 6: 0.8 } },
-            { id: 'SECRET', name: '探求者パック', price: 3000, desc: 'シークレット(SECRET)確率5倍！', color: 'from-indigo-900 to-slate-900', borderColor: 'border-indigo-400', secretMult: 5.0 },
+            { id: 'Z_PACK', name: 'ゼットパック', price: 5000, desc: '属性[Z]の出現率大幅UP！', color: 'from-black to-gray-900', borderColor: 'border-black', variantRate: { 2: 0.1 } },
             { id: 'RARE_PLUS', name: 'レア以上確定パック', price: 5000, desc: 'RARE以上が必ず出現！', color: 'from-blue-800 to-blue-950', borderColor: 'border-blue-400', minRarity: 'RARE' },
-            { id: 'ULTIMATE', name: '究極パック', price: 30000, desc: 'ULTIMATE以上確定！', color: 'from-red-800 to-rose-950', borderColor: 'border-rose-500', minRarity: 'ULTIMATE' },
-            { id: 'GOD_OMEGA', name: 'オメガパック', price: 100000, desc: 'GOD確率10倍(1%) & LEGEND以上確定！', color: 'from-yellow-700 via-purple-800 to-black', borderColor: 'border-yellow-300', minRarity: 'LEGEND', godMult: 10.0 },
+            { id: 'SECRET_MYSTERY', name: 'ミステリーパック', price: 10000, desc: '新レアリティ[SECRET]が出やすい！', color: 'from-gray-800 via-purple-900 to-gray-900', borderColor: 'border-purple-400', secretRate: 0.1 },
+            { id: 'GOD_OMEGA', name: 'オメガパック', price: 100000, desc: 'GOD以上確率10倍 & LEGEND以上確定！', color: 'from-yellow-700 via-purple-800 to-black', borderColor: 'border-yellow-300', minRarity: 'LEGEND', godMult: 10.0 },
         ];
 
-        const ANIMAL_EMOJIS = {
-            "ライオン": "🦁", "ドラゴン": "🐉", "クジラ": "🐋", "フェニックス": "🦅", "クラーケン": "🦑", "グリフォン": "🦅", "ティラノサウルス": "🦖", "マンモス": "🦣", "サラマンダー": "🦎", "ペガサス": "🦄", "ヒドラ": "🐍", "狐": "🦊", "スフィンクス": "🗿", "ゴリラ": "🦍", "サメ": "🦈", "ペンギン": "🐧", "サイ": "🦏", "カマキリ": "🦗", "スコーピオン": "🦂", "ハヤブサ": "🦅", "アナコンダ": "🐍", "タイガー": "🐯", "ベア": "🐻", "クロコダイル": "🐊", "イール": "🐟", "フロッグ": "🐸", "カブトムシ": "🪲", "イーグル": "🦅", "ムササビ": "🐿️", "カメレオン": "🦎", "アルマジロ": "🦔", "コウモリ": "🦇", "オオカミ": "🐺", "ゾウ": "🐘", "チーター": "🐆", "ヒョウ": "🐆", "ジャガー": "🐆", "カバ": "🦛", "キリン": "🦒", "バッファロー": "🐃", "イノシシ": "🐗", "カンガルー": "🦘", "トカゲ": "🦎", "ワニ": "🐊", "ヘビ": "🐍", "コブラ": "🐍", "ワシ": "🦅", "コンドル": "🦅", "フクロウ": "🦉", "ダチョウ": "🐦", "シャチ": "🐬", "イカ": "🦑", "エイ": "🐟", "ピラニア": "🐟", "スズメバチ": "🐝", "クワガタ": "🪲", "トンボ": "🪁", "クモ": "🕷️", "ムカデ": "🐛", "パンダ": "🐼", "サル": "🐒", "オランウータン": "🦧", "ハムスター": "🐹", "ネズミ": "🐭", "リス": "🐿️", "ウサギ": "🐰", "ネコ": "🐱", "イヌ": "🐶", "ウマ": "🐴", "ウシ": "🐮", "ブタ": "🐷", "ヒツジ": "🐑", "ヤギ": "🐐", "トリ": "🐔", "ニワトリ": "🐔", "ヒヨコ": "🐥", "カモ": "🦆", "ツル": "🦢", "ハト": "🕊️", "カラス": "🐦‍⬛", "インコ": "🦜", "オウム": "🦜", "カエル": "🐸", "カメ": "🐢", "サカナ": "🐟", "タコ": "🐙", "エビ": "🦐", "カニ": "🦀", "貝": "🐚", "虫": "🐛", "チョウ": "🦋", "ハチ": "🐝", "テントウムシ": "🐞", "アリ": "🐜", "ヌー": "🐂", "ラクダ": "🐫", "アルパカ": "🦙", "ラマ": "🦙", "ロバ": "🫏", "柴犬": "🐕", "ドーベルマン": "🐕‍🦺", "土佐犬": "🐕", "セントバーナード": "🐶", "ペルシャ猫": "🐈", "三毛猫": "🐈", "黒猫": "🐈‍⬛", "ヤマネコ": "🐱", "アライグマ": "🦝", "タヌキ": "🍃", "イタチ": "🦦", "スカンク": "🦨", "ハリネズミ": "🦔", "ヤマアラシ": "🦔", "モグラ": "🕳️", "ビーバー": "🦫", "カピバラ": "🥔", "カワウソ": "🦦", "ラッコ": "🦦", "アザラシ": "🦭", "アシカ": "🦭", "セイウチ": "🦭", "ジュゴン": "🐋", "イルカ": "🐬", "マンボウ": "🐟", "アンコウ": "🔦", "タツノオトシゴ": "🐉", "ウミガメ": "🐢", "フラミンゴ": "🦩", "クジャク": "🦚", "白鳥": "🦢", "キジ": "🐦", "キツツキ": "🐦", "カワセミ": "🐦", "ツバメ": "🐦", "トノサマガエル": "🐸", "アマガエル": "🐸", "ウーパールーパー": "🦎", "イモリ": "🦎", "ヤモリ": "🦎", "リクガメ": "🐢", "モルモット": "🐹", "チンチラ": "🐭", "フェレット": "🦦", "ハツカネズミ": "🐁", "スズメ": "🐦", "金魚": "🐟", "コイ": "🐟", "メダカ": "🐟", "ドジョウ": "🐟", "ザリガニ": "🦞", "サワガニ": "🦀", "ヤドカリ": "🐚", "アサリ": "🐚", "シジミ": "🐚", "カタツムリ": "🐌", "ナメクジ": "🐌", "ミミズ": "🪱", "シロアリ": "🐜", "アブラムシ": "🐛", "ガ": "🦋", "ミツバチ": "🐝", "アシナガバチ": "🐝", "ハエ": "🪰", "カ": "🦟", "ゴキブリ": "🪳", "ノミ": "🐛", "ダニ": "🕷️", "バッタ": "🦗", "コオロギ": "🦗", "スズムシ": "🦗", "セミ": "🦗", "ホタル": "🔦", "アメンボ": "🦟", "ゲンゴロウ": "🪲", "タガメ": "🪲", "ミズカマキリ": "🦗", "ゾウリムシ": "🦠", "ミジンコ": "🦠", "アメーバ": "🦠", "プラナリア": "🪱", "クリオネ": "🧚", "クラゲ": "🪼", "ヒトデ": "⭐", "ウニ": "🦔", "ナマコ": "🥒", "フグ": "🐡", "イワシ": "🐟", "アジ": "🐟", "サバ": "🐟", "サンマ": "🐟", "タイ": "🐟", "マグロ": "🐟", "サケ": "🐟", "ラーテル": "🦡", "クズリ": "🦡", "タスマニアデビル": "👿", "マンドリル": "🐒"
-        };
-
-        const getEmoji = (name) => {
-            for (const [key, emoji] of Object.entries(ANIMAL_EMOJIS)) {
-                if (name.includes(key)) return emoji;
-            }
-            return "🐾";
-        };
+        const POTION_TYPES = [
+            { id: 'LIFE_AWAKENING', name: '命覚醒ポーション', duration: 180 * 60 * 1000, desc: '指定カードを3時間覚醒(HP/ATK 2倍)させる。効果終了後、そのカードは消滅する。', type: 'CARD_BUFF', cost: 3000 },
+            { id: 'RICH', name: '富豪のポーション', duration: 60 * 60 * 1000, desc: '1時間、獲得コインが2倍になる。', type: 'PLAYER_BUFF', cost: 2000 },
+            { id: 'FOCUS', name: '集中力の秘薬', duration: 30 * 60 * 1000, desc: '30分、ミニゲームが簡単になる。', type: 'PLAYER_BUFF', cost: 1000 },
+        ];
 
         const CARD_DATA_RAW = {
+            SECRET_GOD: ["アザトースの種子", "ヨルムンガンド", "クトゥルフの落とし子", "八咫烏（ヤタガラス）", "白澤（ハクタク）", "九頭龍（クズリュウ）", "開発者（ザ・クリエイター）", "虚無（ヴォイド）", "ラプラスの悪魔", "ウロボロス（無限蛇）"],
+            SECRET: ["スカイフィッシュ（ロッド）", "フラットウッズ・モンスター", "モスマン", "ジャージー・デビル", "モンゴリアン・デス・ワーム", "ドーバー・デーモン", "イエティ（雪男）", "シャドーピープル", "ニンゲン", "人面犬（ジンメンケン）", "シュレーディンガーの猫", "パブロフの犬（コンディショナー）", "バタフライ・エフェクト（蝶）", "宇宙犬ライカ（スターチャイルド）", "ミッシング・リンク", "バク（夢喰い）", "金鵄（キンシ）", "招き猫（億万長者）", "名もなき怪物", "エラー・グリッチ"],
             GOD: ["創世のホワイトライオン","終焉のブラックドラゴン","時空のクジラ・コスモオーシャン","次元の亀・ギャラクシータートル","太陽神ラー・ファルコン"],
             LEGEND: ["ゴールデン・フェニックス","深海王クラーケン","雷帝グリフォン","鋼鉄のティラノサウルス","極北の幻獣マンモス","灼熱のサラマンダー","暴風のペガサス","猛毒のキングヒドラ","霊峰の九尾の狐","賢者スフィンクス","海王リヴァイアサン","冥界の番犬ケルベロス","北欧の巨狼フェンリル","聖獣ユニコーン","大怪鳥ロック"],
             ULTIMATE: ["キングコング・ゴリラ","メガロドン","皇帝ペンギン・ジェネラル","アーマード・サイ","剣豪カマキリ","デス・スコーピオン","マッハ・ハヤブサ","ジャイアント・アナコンダ","ベンガル・タイガー（覚醒）","グレート・ホワイト・ベア","ナイル・クロコダイル（狂暴化）","エレクトロ・イール","ポイズン・ダートフロッグ","カブトムシ・ヘラクレス","侍イーグル","忍者ムササビ","幻惑のカメレオン","鉄壁のアルマジロ","吸血コウモリ・ロード","孤高のオオカミ・リーダー","トリケラトプス・チャージャー","スピノサウルス・アクア","プテラノドン・スカイ","サーベルタイガー","ギガントピテクス","モササウルス","ダンクルオステウス","アノマロカリス・オメガ","ブラキオサウルス・タイタン","ヴェロキラプトル・アサシン","パキケファロサウルス・ハンマー","アンキロサウルス・タンク","ステゴサウルス・ブレード","アルゲンタヴィス","ケツァルコアトルス","ティタノボア","ダイアウルフ","メガテリウム","ギガノトサウルス","リオプレウロドン","プレシオサウルス","イクチオサウルス","ディメトロドン","パラサウロロフス","始祖鳥アルケオプテリクス"],
@@ -145,13 +169,14 @@
 
         // --- UI COMPONENTS ---
 
-        const Card = ({ card, isNew, size = "normal", showPower = true, isHidden = false, onClick, className = "", isRental = false, isSelected = false, level = 0, variantId = 1 }) => {
+        const Card = ({ card, isNew, size = "normal", showPower = true, isHidden = false, onClick, className = "", isRental = false, isSelected = false, level = 0, variantId = 1, isAwakened = false }) => {
             if (!card) return <div className="w-24 h-36 bg-gray-800 rounded-lg animate-pulse"></div>;
             
             const variant = VARIANT_CONFIG[variantId] || VARIANT_CONFIG[1];
             const levelMultiplier = 1 + (level * 0.1);
-            const displayPower = Math.floor(card.power * levelMultiplier * variant.powMod);
-            const displayHp = Math.floor(card.hp * levelMultiplier * variant.hpMod);
+            const awakenedMult = isAwakened ? 2.0 : 1.0;
+            const displayPower = Math.floor(card.power * levelMultiplier * variant.powMod * awakenedMult);
+            const displayHp = Math.floor(card.hp * levelMultiplier * variant.hpMod * awakenedMult);
 
             if (isHidden) {
                 return (
@@ -163,7 +188,7 @@
             }
 
             const config = RARITY_CONFIG[card.rarity];
-            const isHolo = card.rarity === 'GOD' || card.rarity === 'LEGEND' || variantId === 2 || variantId === 10;
+            const isHolo = card.rarity === 'SECRET_GOD' || card.rarity === 'GOD' || card.rarity === 'LEGEND' || variantId === 2 || variantId === 10;
             const bgGradient = `bg-gradient-to-br ${config.color}`;
             const dimClass = size === "small" ? "w-24 h-32 text-[10px]" : "w-40 h-56";
             const titleSize = size === "small" ? "text-[10px]" : "text-xs";
@@ -174,21 +199,22 @@
             const displayName = card.name + (variant.id !== 1 ? ` ${variant.suffix}` : "");
 
             return (
-                <div onClick={onClick} className={`relative rounded-xl p-0.5 transition-all duration-300 transform ${onClick ? 'cursor-pointer active:scale-95' : ''} ${variantRing} ${bgGradient} shadow-lg ${className} ${isSelected ? "ring-4 ring-green-500" : ""}`}>
+                <div onClick={onClick} className={`relative rounded-xl p-0.5 transition-all duration-300 transform ${onClick ? 'cursor-pointer active:scale-95' : ''} ${variantRing} ${bgGradient} shadow-lg ${className} ${isSelected ? "ring-4 ring-green-500" : ""} ${isAwakened ? "ring-4 ring-red-500 animate-pulse-red" : ""}`}>
                     <div className={`h-full w-full bg-gray-900 rounded-lg overflow-hidden flex flex-col relative ${dimClass}`}>
                         <div className="absolute inset-0 bg-gray-800 opacity-50" style={{backgroundImage: 'radial-gradient(#ffffff10 1px, transparent 1px)', backgroundSize: '10px 10px'}}></div>
                         {isHolo && <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent animate-[shimmer_3s_infinite] pointer-events-none" style={{backgroundSize: '200% 100%'}} />}
                         <div className="absolute top-0 left-0 z-10 flex justify-between items-center p-1 w-full">
-                            <span className={`font-black ${config.text} drop-shadow-md px-1 bg-black/40 rounded`}>{card.rarity.substring(0,1)}</span>
+                            <span className={`font-black ${config.text} drop-shadow-md px-1 bg-black/40 rounded`}>{card.rarity === 'SECRET_GOD' ? 'S.GOD' : card.rarity === 'SECRET' ? 'SEC' : card.rarity.substring(0,1)}</span>
                             <span className="text-white/90 font-mono bg-black/50 px-1 rounded text-[10px]">Lv.{level+1}</span>
                         </div>
-                        <div className={`flex-1 flex items-center justify-center z-10 ${emojiSize} filter drop-shadow-lg ${variant.id===6?'grayscale opacity-70':''}`}>{emoji}</div>
+                        <div className={`flex-1 flex items-center justify-center z-10 ${emojiSize} filter drop-shadow-lg ${variant.id===6?'grayscale opacity-70':''} ${card.rarity === 'SECRET_GOD' ? 'glitch-text' : ''}`}>{emoji}</div>
                         <div className="relative z-10 w-full p-1.5 text-center bg-gradient-to-t from-black/90 to-transparent">
                             <h3 className={`${titleSize} font-bold text-white mb-1 leading-tight line-clamp-2 min-h-[2.4em] flex items-center justify-center drop-shadow-md ${variant.id === 2 ? 'variant-text-secret' : ''}`}>{displayName}</h3>
                             {showPower && <div className="flex justify-between gap-1 text-[9px] font-mono text-white bg-black/60 rounded px-1 py-0.5 backdrop-blur-sm border border-white/10"><span className="text-green-400">H{displayHp}</span><span className="text-red-400">A{displayPower}</span></div>}
                         </div>
                         {isNew && <div className="absolute top-3 -right-8 bg-red-600 text-white text-[8px] font-bold px-8 py-0.5 rotate-45 shadow-lg z-20">NEW</div>}
                         {isRental && <div className="absolute top-3 -left-8 bg-blue-600 text-white text-[8px] font-bold px-8 py-0.5 -rotate-45 shadow-lg z-20">RENTAL</div>}
+                        {isAwakened && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 font-black text-2xl opacity-50 pointer-events-none rotate-12 border-4 border-red-500 rounded p-1">覚醒</div>}
                         {isSelected && <div className="absolute inset-0 bg-green-500/30 z-30 flex items-center justify-center"><Icons.CheckCircle size={32} className="text-white drop-shadow-lg"/></div>}
                     </div>
                 </div>
@@ -203,15 +229,14 @@
                 secondary: "bg-gray-700 hover:bg-gray-600 text-white border border-gray-600",
                 gold: "bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-white shadow-lg shadow-yellow-900/30",
                 danger: "bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/30",
-                green: "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/30"
+                green: "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/30",
+                purple: "bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/30"
             };
             return (
                 <button onClick={onClick} disabled={disabled} className={`${baseStyle} ${sizeStyles} ${variants[variant]} ${className}`}>{children}</button>
             );
         };
 
-        // --- PAGINATION UTILS ---
-        
         const PaginationControls = ({ page, totalPages, onPrev, onNext }) => {
             if (totalPages <= 1) return null;
             return (
@@ -223,7 +248,6 @@
             );
         };
 
-        // --- ANIMATION & MODALS ---
         const PackOpener = ({ onOpen, packType }) => {
             const [cutProgress, setCutProgress] = useState(0);
             const [isCut, setIsCut] = useState(false);
@@ -241,9 +265,7 @@
             };
             const handleEnd = () => { isDragging.current = false; if (!isCut) setCutProgress(0); };
             
-            // パックタイプごとのスタイル
             const currentPack = PACK_TYPES.find(p => p.id === packType) || PACK_TYPES[0];
-            const packColor = currentPack.color.split(' ')[0].replace('from-', 'bg-') || 'bg-yellow-600';
 
             return (
                 <div className="flex flex-col items-center justify-center h-full w-full animate-in fade-in zoom-in fixed inset-0 bg-black/80 z-50" style={{zIndex: 20000}}>
@@ -263,7 +285,7 @@
             );
         };
 
-        const BattleTimer = ({ onComplete }) => {
+        const BattleTimer = ({ onComplete, difficulty = 1.0 }) => {
             const [size, setSize] = useState(200);
             const [isActive, setIsActive] = useState(true);
             const [result, setResult] = useState(null);
@@ -273,15 +295,14 @@
                 const animate = () => {
                     if (!isActive) return;
                     const elapsed = Date.now() - startTime.current;
-                    // 1500ms -> 2000ms に変更して少しゆっくりに
-                    const duration = 2000;
+                    const duration = 2000 * difficulty; // difficulty > 1 で遅くなる
                     const progress = (elapsed % duration) / duration;
                     setSize(200 * (1 - progress));
                     reqRef.current = requestAnimationFrame(animate);
                 };
                 reqRef.current = requestAnimationFrame(animate);
                 return () => cancelAnimationFrame(reqRef.current);
-            }, [isActive]);
+            }, [isActive, difficulty]);
             const handleStop = () => {
                 if (!isActive) return;
                 setIsActive(false);
@@ -290,10 +311,9 @@
                 const diff = Math.abs(size - target);
                 let multiplier = 1.0, label = "MISS...", color = "text-gray-400";
                 
-                // 判定を甘く調整
-                if (diff < 20) { multiplier = 2.0; label = "PERFECT!!"; color = "text-yellow-400"; } // 15 -> 20
-                else if (diff < 50) { multiplier = 1.5; label = "GREAT!"; color = "text-green-400"; } // 40 -> 50
-                else if (diff < 90) { multiplier = 1.1; label = "GOOD"; color = "text-blue-400"; } // 70 -> 90
+                if (diff < 20 * (difficulty > 1 ? 1.5 : 1)) { multiplier = 2.0; label = "PERFECT!!"; color = "text-yellow-400"; }
+                else if (diff < 50 * (difficulty > 1 ? 1.5 : 1)) { multiplier = 1.5; label = "GREAT!"; color = "text-green-400"; }
+                else if (diff < 90) { multiplier = 1.1; label = "GOOD"; color = "text-blue-400"; }
                 else { multiplier = 0.8; label = "BAD..."; color = "text-red-400"; }
                 
                 setResult({ multiplier, label, color });
@@ -317,18 +337,17 @@
             );
         };
 
-        const SlotMachine = ({ onResult }) => {
+        const SlotMachine = ({ onResult, difficulty = 1.0 }) => {
             const [reels, setReels] = useState([0, 0, 0]);
             const [spinning, setSpinning] = useState([true, true, true]);
             const symbols = ["🍒", "🍋", "💎", "7️⃣", "🔔"];
             
             useEffect(() => {
                 const interval = setInterval(() => {
-                    // 80ms -> 150ms に変更して目押ししやすく
                     setReels(prev => prev.map((val, i) => spinning[i] ? (val + 1) % symbols.length : val));
-                }, 150);
+                }, 150 * difficulty); // difficulty > 1 で遅くなる
                 return () => clearInterval(interval);
-            }, [spinning]);
+            }, [spinning, difficulty]);
 
             const stopReel = () => {
                 const nextIndex = spinning.findIndex(Boolean);
@@ -336,7 +355,6 @@
                     const newSpinning = [...spinning];
                     newSpinning[nextIndex] = false;
                     setSpinning(newSpinning);
-                    // If last reel
                     if (nextIndex === 2) {
                         setTimeout(() => calculateResult(), 600);
                     }
@@ -355,8 +373,6 @@
                 }
                 onResult(multiplier, label);
             };
-
-            const isFinished = spinning.every(s => !s);
 
             return (
                 <div className="fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center cursor-pointer" onClick={stopReel}>
@@ -377,66 +393,11 @@
             );
         };
 
-        const TheLane = ({ onBuy, coins }) => {
-            const [items, setItems] = useState([]);
-            const containerRef = useRef(null);
-            
-            useEffect(() => {
-                const spawn = () => {
-                    setItems(currentItems => {
-                        if (currentItems.length > 5) return currentItems;
-                        
-                        let rarity = 'COMMON';
-                        const r = Math.random();
-                        if (r < 0.005) rarity = 'LEGEND';
-                        else if (r < 0.05) rarity = 'EPIC';
-                        else if (r < 0.2) rarity = 'RARE';
-                        
-                        let variantId = 1;
-                        if (Math.random() < 0.01) variantId = 2; 
-                        
-                        const pool = ALL_CARDS.filter(c => c.rarity === rarity);
-                        const base = pool[Math.floor(Math.random() * pool.length)];
-                        
-                        const newItem = {
-                            id: Date.now() + Math.random(),
-                            card: { ...base, variantId },
-                            left: 100,
-                            price: Math.floor(RARITY_CONFIG[rarity].buy * (variantId === 2 ? 10 : 1.5))
-                        };
-                        return [...currentItems, newItem];
-                    });
-                };
-                const interval = setInterval(spawn, 2500); 
-                return () => clearInterval(interval);
-            }, []); 
-
-            useEffect(() => {
-                const move = setInterval(() => {
-                    setItems(prev => prev.map(i => ({ ...i, left: i.left - 0.3 })).filter(i => i.left > -30));
-                }, 50);
-                return () => clearInterval(move);
-            }, []);
-
-            return (
-                <div className="fixed bottom-0 left-0 w-full h-24 bg-gray-950/95 border-t-2 border-yellow-600/50 z-[9000] overflow-hidden flex items-center shadow-[0_-5px_15px_rgba(0,0,0,0.5)]" ref={containerRef}>
-                    <div className="absolute left-0 top-0 bg-red-600 text-white text-[10px] px-2 font-bold z-20">DARK MARKET</div>
-                    {items.map(item => (
-                        <div key={item.id} className="absolute top-1/2 -translate-y-1/2 w-16 cursor-pointer hover:scale-110 transition-transform z-10 flex flex-col items-center" style={{ left: `${item.left}%` }} onClick={() => onBuy(item)}>
-                             <Card card={item.card} size="small" showPower={false} variantId={item.card.variantId} className="w-14 h-16 text-[8px]" />
-                             <div className="bg-black text-yellow-300 text-[9px] px-1 rounded mt-1 border border-yellow-600 font-mono">{item.price}G</div>
-                        </div>
-                    ))}
-                    <div className="absolute right-2 bottom-1 text-[10px] text-gray-500 font-mono">TAP TO BUY</div>
-                </div>
-            );
-        };
-
         // --- MAIN APP ---
 
         function AnimalChronicle() {
             const [coins, setCoins] = useState(1000);
-            const [playerRank, setPlayerRank] = useState(1); // プレイヤーランク
+            const [playerRank, setPlayerRank] = useState(1); 
             const [collection, setCollection] = useState({});
             const [cardLevels, setCardLevels] = useState({});
             const [view, setView] = useState('HOME');
@@ -458,6 +419,11 @@
             const [missionProgress, setMissionProgress] = useState({});
             const [claimedMissions, setClaimedMissions] = useState([]);
             const [idleRewards, setIdleRewards] = useState({ coins: 0, lastCheck: Date.now() });
+            
+            // New States
+            const [awakenedCards, setAwakenedCards] = useState([]); // [{...card, uniqueId, expiresAt}]
+            const [activeBuffs, setActiveBuffs] = useState({}); // { RICH: expiresAt, FOCUS: expiresAt }
+            const [potionTargetSelection, setPotionTargetSelection] = useState(false); // Mode to select card for potion
 
             // Event
             const [currentEvent, setCurrentEvent] = useState(null);
@@ -475,12 +441,12 @@
             const ITEMS_PER_PAGE_DECK = 10; 
 
             useEffect(() => {
-                const saved = localStorage.getItem('animalChronicleData_v2_lux'); 
+                const saved = localStorage.getItem('animalChronicleData_v3_2'); 
                 let lastLoginDate = "";
                 if (saved) {
                     const parsed = JSON.parse(saved);
                     setCoins(parsed.coins || 1000);
-                    setPlayerRank(parsed.playerRank || 1); // ランク読み込み
+                    setPlayerRank(parsed.playerRank || 1); 
                     setCollection(parsed.collection || {});
                     setCardLevels(parsed.cardLevels || {});
                     setLastFreePackClaim(parsed.lastFreePackClaim || 0);
@@ -490,6 +456,8 @@
                     setClaimedMissions(parsed.claimedMissions || []);
                     lastLoginDate = parsed.lastLoginDate || "";
                     setIdleRewards(parsed.idleRewards || { coins: 0, lastCheck: Date.now() });
+                    setAwakenedCards(parsed.awakenedCards || []);
+                    setActiveBuffs(parsed.activeBuffs || {});
                 }
                 const today = new Date().toLocaleDateString('ja-JP');
                 if (lastLoginDate !== today) setTimeout(() => setLoginBonus(500), 1000);
@@ -497,7 +465,6 @@
                 checkDailyReset(saved ? JSON.parse(saved).lastDailyReset : "");
                 triggerRandomEvent();
                 
-                // Idle Calc
                 const now = Date.now();
                 const last = saved ? JSON.parse(saved).idleRewards?.lastCheck || now : now;
                 const diffMinutes = Math.floor((now - last) / 60000);
@@ -511,14 +478,40 @@
 
             useEffect(() => {
                 const today = new Date().toLocaleDateString('ja-JP');
-                localStorage.setItem('animalChronicleData_v2_lux', JSON.stringify({
-                    coins, playerRank, collection, cardLevels, lastFreePackClaim, lastDailyReset, activeMissions, missionProgress, claimedMissions, lastLoginDate: today, idleRewards: { ...idleRewards, lastCheck: Date.now() }
+                localStorage.setItem('animalChronicleData_v3_2', JSON.stringify({
+                    coins, playerRank, collection, cardLevels, lastFreePackClaim, lastDailyReset, activeMissions, missionProgress, claimedMissions, lastLoginDate: today, idleRewards: { ...idleRewards, lastCheck: Date.now() },
+                    awakenedCards, activeBuffs
                 }));
-            }, [coins, playerRank, collection, cardLevels, lastFreePackClaim, lastDailyReset, activeMissions, missionProgress, claimedMissions]);
+            }, [coins, playerRank, collection, cardLevels, lastFreePackClaim, lastDailyReset, activeMissions, missionProgress, claimedMissions, awakenedCards, activeBuffs]);
 
+            // Timer for Buffs and Awakened Cards expiration
             useEffect(() => {
                 const interval = setInterval(() => {
                     const now = Date.now();
+                    
+                    // Expire Awakened Cards
+                    setAwakenedCards(prev => {
+                        const next = prev.filter(c => c.expiresAt > now);
+                        if (next.length !== prev.length) {
+                            // alert("命覚醒ポーションの効果が切れ、対象カードが消滅しました。"); // Annoying if alerts every tick?
+                        }
+                        return next;
+                    });
+
+                    // Expire Buffs
+                    setActiveBuffs(prev => {
+                        const next = { ...prev };
+                        let changed = false;
+                        Object.keys(next).forEach(key => {
+                            if (next[key] <= now) {
+                                delete next[key];
+                                changed = true;
+                            }
+                        });
+                        return changed ? next : prev;
+                    });
+
+                    // Free Pack Timer
                     const msSinceClaim = now - lastFreePackClaim;
                     const msCooldown = 24 * 60 * 60 * 1000;
                     if (msSinceClaim >= msCooldown) { setFreePackProgress(100); setTimeUntilFreePack("READY"); }
@@ -568,7 +561,6 @@
             };
 
             const triggerRandomEvent = () => {
-                // Lower probability for events as requested
                 const rand = Math.random();
                 if (rand < 0.05) setCurrentEvent({ title: "🔥 溶岩流発生中！", description: "LAVA属性出現率大幅UP！", type: "LAVA" });
                 else if (rand < 0.10) setCurrentEvent({ title: "💎 クリスタル採掘祭", description: "CRYSTAL属性出現率大幅UP！", type: "CRYSTAL" });
@@ -595,8 +587,7 @@
             const rollRarity = (packType) => {
                 const config = PACK_TYPES.find(p => p.id === packType);
                 
-                // minRarityがある場合、抽選テーブルをフィルタリングして再計算
-                let availableRarities = ['GOD', 'LEGEND', 'ULTIMATE', 'EPIC', 'RARE', 'COMMON'];
+                let availableRarities = ['SECRET_GOD', 'SECRET', 'GOD', 'LEGEND', 'ULTIMATE', 'EPIC', 'RARE', 'COMMON'];
                 if (config && config.minRarity) {
                     const minIdx = availableRarities.indexOf(config.minRarity);
                     if (minIdx !== -1) {
@@ -604,21 +595,17 @@
                     }
                 }
 
-                // 確率の重み計算
                 let totalWeight = 0;
                 const weights = {};
 
                 for (let key of availableRarities) {
                     let prob = RARITY_CONFIG[key].probability;
                     
-                    // イベント補正
                     if (currentEvent && currentEvent.type === key) prob *= 1.5;
                     
-                    // パック補正(GOD)
-                    if (key === 'GOD' && config && config.godMult) {
-                        prob *= config.godMult;
-                    }
-                    
+                    if (key === 'GOD' && config && config.godMult) prob *= config.godMult;
+                    if (key === 'SECRET' && config && config.secretRate) prob = config.secretRate;
+
                     weights[key] = prob;
                     totalWeight += prob;
                 }
@@ -636,7 +623,6 @@
             const rollVariant = (packType) => {
                 const config = PACK_TYPES.find(p => p.id === packType);
 
-                // パック固有のVariant確率がある場合 (50%固定など)
                 if (config && config.variantRate) {
                     for (const [vId, rate] of Object.entries(config.variantRate)) {
                         if (Math.random() < rate) return parseInt(vId);
@@ -653,12 +639,6 @@
                 const r = Math.random();
                 for (let id = 2; id <= 10; id++) {
                       let chance = VARIANT_CONFIG[id].chance;
-                      
-                      // パックによるSecret確率補正
-                      if (id === 2 && config && config.secretMult) {
-                          chance *= config.secretMult;
-                      }
-
                       if (Math.random() < chance) return id;
                 }
                 return 1; 
@@ -679,7 +659,6 @@
                     if (freePackProgress < 100) return;
                     setLastFreePackClaim(Date.now());
                     setFreePackProgress(0);
-                    // Free is always NORMAL pack logic
                 } else {
                     const cost = count * config.price;
                     if (coins < cost) return;
@@ -709,14 +688,47 @@
                 updateMission('GACHA_COUNT');
             };
 
-            const handleLaneBuy = (item) => {
-                if (coins < item.price) { alert("お金が足りません！"); return; }
-                if (!window.confirm(`${item.card.name} を ${item.price}G で購入しますか？`)) return;
-                setCoins(prev => prev - item.price);
-                const key = `${item.card.id}_${item.card.variantId}`;
-                setCollection(prev => ({ ...prev, [key]: (prev[key] || 0) + 1 }));
-                updateMission('LANE_BUY');
-                alert("購入しました！");
+            const handlePotionBuy = (potion) => {
+                if (potion.costType === 'CARD') {
+                    // Start selection mode for Life Awakening
+                    setPotionTargetSelection(true);
+                    setView('COLLECTION');
+                    alert("命覚醒させるカードをコレクションから選択してください。\n※選択したカード1枚が消費され、3時間限定の強化個体に生まれ変わります。");
+                } else {
+                    // Coin purchase
+                    if (coins < potion.costAmount) { alert("お金が足りません！"); return; }
+                    if (!confirm(`${potion.name}を購入して使用しますか？`)) return;
+                    
+                    setCoins(c => c - potion.costAmount);
+                    const now = Date.now();
+                    setActiveBuffs(prev => ({ ...prev, [potion.id]: now + potion.duration }));
+                    alert(`${potion.name}を使用しました！`);
+                }
+            };
+
+            const handleCardSelectionForPotion = (card) => {
+                if (!potionTargetSelection) return;
+                
+                const key = `${card.id}_${card.variantId}`;
+                if (collection[key] < 1) return;
+
+                if (!confirm(`${card.name} に命覚醒ポーションを使用しますか？\n\n【警告】\nこのカード1枚を消費し、3時間限定の強力な個体を生成します。\n効果終了後、生成された個体は消滅します。（元のカードは戻りません）`)) return;
+
+                // Consume card
+                setCollection(prev => ({ ...prev, [key]: prev[key] - 1 }));
+                
+                // Add to Awakened Cards
+                const awakened = {
+                    ...card,
+                    uniqueId: Date.now(), // Unique ID for this instance
+                    expiresAt: Date.now() + (3 * 60 * 60 * 1000), // 3 hours
+                    isAwakened: true
+                };
+                setAwakenedCards(prev => [...prev, awakened]);
+                
+                setPotionTargetSelection(false);
+                setView('SHOP');
+                alert("命覚醒に成功しました！\nデッキ選択画面で編成可能です。");
             };
 
             const startRankBattle = () => { confirmDeckAndStart(true); };
@@ -728,26 +740,26 @@
                     const level = cardLevels[c.id] || 0;
                     const variant = VARIANT_CONFIG[c.variantId];
                     const mult = 1 + (level * 0.1);
+                    const awakenedMult = c.isAwakened ? 2.0 : 1.0;
                     return { 
                         ...c, 
-                        hp: Math.floor(c.hp * mult * variant.hpMod * (isRank ? 10 : 1)), // ランク戦ならHP10倍
-                        power: Math.floor(c.power * mult * variant.powMod),
-                        currentHp: Math.floor(c.hp * mult * variant.hpMod * (isRank ? 10 : 1)), 
+                        hp: Math.floor(c.hp * mult * variant.hpMod * awakenedMult * (isRank ? 10 : 2)), 
+                        power: Math.floor(c.power * mult * variant.powMod * awakenedMult),
+                        currentHp: Math.floor(c.hp * mult * variant.hpMod * awakenedMult * (isRank ? 10 : 2)), 
                         level: level, 
-                        isRental: c.isRental || false 
+                        isRental: c.isRental || false,
+                        isAwakened: c.isAwakened
                     };
                 });
                 
                 const playerTotalPower = myTeam.reduce((sum, c) => sum + c.power, 0);
                 const playerAvgPower = playerTotalPower / 3;
 
-                // ランクに応じた敵の強さ倍率を計算
-                // ランク1: 0.6倍 (弱い) -> ランクアップで徐々に強くなる
                 let rankMultiplier = 1.0;
                 if (isRank) {
                     rankMultiplier = 0.58 + (playerRank * 0.02); 
                 } else {
-                    rankMultiplier = 0.7; // 通常バトルは弱め固定
+                    rankMultiplier = 0.8; 
                 }
 
                 const enemyTeam = [];
@@ -761,9 +773,9 @@
                     enemyTeam.push({ 
                         ...base, 
                         variantId, 
-                        hp: Math.floor(base.hp * mult * variant.hpMod * rankMultiplier * (isRank ? 10 : 1)), // ランク戦ならHP10倍
+                        hp: Math.floor(base.hp * mult * variant.hpMod * rankMultiplier * (isRank ? 10 : 2)), 
                         power: Math.floor(base.power * mult * variant.powMod * rankMultiplier),
-                        currentHp: Math.floor(base.hp * mult * variant.hpMod * rankMultiplier * (isRank ? 10 : 1)),
+                        currentHp: Math.floor(base.hp * mult * variant.hpMod * rankMultiplier * (isRank ? 10 : 2)),
                         level: enemyLevel
                     });
                 }
@@ -778,8 +790,7 @@
             };
 
             const startAttack = () => {
-                if (!battleState) return;
-                // 50% chance for Slot Battle
+                if (!battleState || battleState.finished || battleState.processingWin) return;
                 if (Math.random() < 0.5) {
                     setIsSlotBattle(true);
                 } else {
@@ -789,24 +800,32 @@
 
             const resolveAttack = (multiplier, label) => {
                 setIsBattleTiming(false); setIsSlotBattle(false);
-                if (!battleState) return;
+                if (!battleState || battleState.finished || battleState.processingWin) return;
                 const damage = Math.floor(battleState.myPower * multiplier);
                 const newEnHp = Math.max(0, battleState.enHp - damage);
                 setDamageAnim({ active: true, target: 'ENEMY', value: damage });
                 setTimeout(() => setDamageAnim({ active: false, target: null, value: 0 }), 1000);
                 const newLogs = [...battleState.logs, `味方攻撃: ${damage} (${label})`];
                 if (newEnHp === 0) {
-                    // Luxurious Rewards for Rank
-                    const baseReward = battleState.isRank ? 2000 * (1 + playerRank * 0.1) : 1000; 
+                    setBattleState(prev => ({ ...prev, enHp: 0, processingWin: true }));
+                    
+                    let baseReward = battleState.isRank ? 2000 * (1 + playerRank * 0.1) : 1000; 
+                    // Rich Potion Multiplier
+                    if (activeBuffs['RICH'] && activeBuffs['RICH'] > Date.now()) {
+                        baseReward *= 2.0;
+                    }
+
                     setTimeout(() => {
-                        setBattleState(prev => ({ ...prev, enHp: newEnHp, finished: true, won: true, reward: Math.floor(baseReward), logs: [...newLogs, "WIN!"] }));
+                        setBattleState(prev => {
+                            if (prev.finished) return prev;
+                            return { ...prev, finished: true, won: true, reward: Math.floor(baseReward), logs: [...newLogs, "WIN!"] };
+                        });
                         setCoins(prev => prev + Math.floor(baseReward));
                         
                         if (battleState.isRank) {
                             setPlayerRank(prev => prev + 1);
                         }
                         
-                        // Luxurious Drop Rate for Rank
                         const dropChance = battleState.isRank ? 0.8 : 0.5;
                         if (Math.random() < dropChance) {
                             const drop = getRandomCard();
@@ -847,7 +866,9 @@
 
             // --- VIEW RENDERERS ---
 
-            const renderHome = () => (
+            const renderHome = () => {
+                const now = Date.now();
+                return (
                 <div className="flex flex-col items-center justify-center h-full space-y-4 animate-in fade-in">
                     <div className="text-center space-y-1">
                         <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 filter drop-shadow-lg">ANIMAL<br/>CHRONICLE<br/><span className="text-2xl text-white">5150</span></h1>
@@ -855,10 +876,31 @@
                         {currentEvent && <div className="mt-1 text-yellow-300 animate-pulse font-bold border border-yellow-500 bg-yellow-900/50 px-3 py-0.5 rounded-full inline-block text-xs">{currentEvent.title}</div>}
                     </div>
 
+                    {/* Active Buffs */}
+                    <div className="w-full px-4 flex flex-wrap gap-2 justify-center">
+                        {Object.keys(activeBuffs).map(buffId => {
+                            const expires = activeBuffs[buffId];
+                            if (expires <= now) return null;
+                            const minutesLeft = Math.ceil((expires - now) / 60000);
+                            const potion = POTION_TYPES.find(p => p.id === buffId);
+                            return (
+                                <div key={buffId} className="bg-blue-900/80 border border-blue-400 text-xs px-2 py-1 rounded text-blue-200 flex items-center gap-1 animate-pulse">
+                                    <Icons.Flask size={10} /> {potion?.name} ({minutesLeft}分)
+                                </div>
+                            );
+                        })}
+                        {awakenedCards.length > 0 && (
+                            <div className="bg-red-900/80 border border-red-400 text-xs px-2 py-1 rounded text-red-200 flex items-center gap-1 animate-pulse-red">
+                                <Icons.Zap size={10} /> 命覚醒中 ({awakenedCards.length}体)
+                            </div>
+                        )}
+                    </div>
+
                     <div className="grid grid-cols-2 gap-2 w-full max-w-md px-4">
                         <Button onClick={() => setView('GACHA')} variant="gold" className="py-4 text-lg flex-col"><div className="flex items-center gap-2"><Icons.Sparkles /> スカウト</div></Button>
                         <Button onClick={() => { setView('DECK_SELECT'); setSelectedDeck([]); }} variant="danger" className="py-4 text-lg flex-col"><div className="flex items-center gap-2"><Icons.Zap /> バトル</div></Button>
                         <Button onClick={() => { setView('COLLECTION'); setCollectionPage(0); }} variant="primary" className="py-4 text-lg flex-col"><div className="flex items-center gap-2"><Icons.Search /> カード一覧</div></Button>
+                        <Button onClick={() => setView('SHOP')} variant="purple" className="py-4 text-lg flex-col"><div className="flex items-center gap-2"><Icons.ShoppingBag /> ショップ</div></Button>
                         
                         {/* Idle Button */}
                         <div className="bg-gray-800 rounded-lg p-2 flex flex-col items-center justify-center border border-gray-600 relative">
@@ -868,40 +910,79 @@
                         </div>
                     </div>
                 </div>
+                );
+            };
+
+            const renderShop = () => (
+                <div className="flex flex-col h-full animate-in fade-in p-2">
+                    <div className="flex justify-between items-center mb-4 shrink-0">
+                        <Button onClick={() => setView('HOME')} variant="secondary" size="small"><Icons.Home size={16}/> 戻る</Button>
+                        <h2 className="text-lg font-bold text-white"><Icons.ShoppingBag className="inline mr-1"/> アイテムショップ</h2>
+                        <div className="bg-gray-800 px-3 py-1 rounded-full border border-gray-600 text-yellow-400 font-bold text-sm">{coins} G</div>
+                    </div>
+                    
+                    <div className="flex-1 overflow-y-auto pb-20 space-y-4">
+                        {POTION_TYPES.map(potion => (
+                            <div key={potion.id} className="bg-gray-800 border border-gray-600 p-4 rounded-xl flex flex-col gap-2 shadow-lg">
+                                <div className="flex justify-between items-start">
+                                    <h3 className="text-xl font-bold text-blue-300 flex items-center gap-2"><Icons.Flask /> {potion.name}</h3>
+                                    {potion.costType === 'CARD' ? (
+                                        <span className="bg-red-900 text-red-200 px-2 py-1 rounded text-xs font-bold border border-red-500">カード消費</span>
+                                    ) : (
+                                        <span className="text-yellow-400 font-bold">{potion.costAmount} G</span>
+                                    )}
+                                </div>
+                                <p className="text-sm text-gray-300">{potion.desc}</p>
+                                <Button 
+                                    onClick={() => handlePotionBuy(potion)} 
+                                    variant={potion.costType === 'CARD' ? 'danger' : 'primary'}
+                                    disabled={potion.costType === 'COIN' && coins < potion.costAmount}
+                                >
+                                    {potion.costType === 'CARD' ? '対象を選択して使用' : '購入して使用'}
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             );
 
             const renderDeckSelect = () => {
-                let myCards = []; // const -> let に変更してフィルタリング可能に
+                let myCards = []; 
+                
+                // Normal Cards
                 Object.keys(collection).forEach(key => {
                     if (collection[key] > 0) {
                         const [id, varId] = key.split('_').map(Number);
                         const base = ALL_CARDS.find(c => c.id === id);
                         if (base) {
                              const vId = VARIANT_CONFIG[varId] ? varId : 1;
-                             myCards.push({ ...base, variantId: vId });
+                             myCards.push({ ...base, variantId: vId, isAwakened: false });
                         }
                     }
                 });
+
+                // Awakened Cards
+                awakenedCards.forEach(c => {
+                    myCards.push({ ...c, isAwakened: true });
+                });
                 
-                // フィルタリング処理
                 if (deckFilter !== 'ALL') {
                     myCards = myCards.filter(c => c.variantId.toString() === deckFilter);
                 }
 
-                // ソート処理
                 myCards.sort((a, b) => {
                     const getPower = (c) => {
                          const variant = VARIANT_CONFIG[c.variantId] || VARIANT_CONFIG[1];
                          const level = cardLevels[c.id] || 0;
-                         return Math.floor(c.power * (1 + level * 0.1) * variant.powMod);
+                         const awake = c.isAwakened ? 2.0 : 1.0;
+                         return Math.floor(c.power * (1 + level * 0.1) * variant.powMod * awake);
                     };
 
                     if (deckSort === 'POWER_ASC') {
                         return getPower(a) - getPower(b);
                     } else if (deckSort === 'NEWEST') {
-                        return b.id - a.id; // IDが大きい順（リストの後ろの方）
+                        return b.id - a.id; 
                     } else {
-                        // POWER_DESC (Default)
                         return getPower(b) - getPower(a);
                     }
                 });
@@ -916,7 +997,6 @@
                             <h2 className="text-lg font-bold text-white">出撃デッキ選択</h2>
                         </div>
 
-                        {/* フィルタ & ソート UI */}
                         <div className="flex gap-2 mb-2 overflow-x-auto pb-1 no-scrollbar">
                             <select 
                                 className="bg-gray-800 text-white text-xs p-2 rounded border border-gray-600 outline-none focus:border-yellow-500"
@@ -940,7 +1020,7 @@
                         </div>
 
                         <div className="flex justify-center gap-2 mb-4 min-h-[100px] bg-gray-800/50 p-2 rounded border border-dashed border-gray-600">
-                            {selectedDeck.map((c,i) => <div key={i} onClick={() => setSelectedDeck(prev => prev.filter((_,idx)=>idx!==i))} className="relative"><Card card={c} size="small" level={cardLevels[c.id]||0} variantId={c.variantId}/></div>)}
+                            {selectedDeck.map((c,i) => <div key={i} onClick={() => setSelectedDeck(prev => prev.filter((_,idx)=>idx!==i))} className="relative"><Card card={c} size="small" level={cardLevels[c.id]||0} variantId={c.variantId} isAwakened={c.isAwakened}/></div>)}
                             {selectedDeck.length < 3 && <div className="text-gray-500 text-xs flex items-center">3体選択</div>}
                         </div>
                         <div className="grid grid-cols-2 gap-2 mb-4">
@@ -953,10 +1033,14 @@
                             ) : (
                                 <div className="grid grid-cols-3 gap-2">
                                     {paginatedCards.map((card, idx) => {
-                                        const isSelected = selectedDeck.some(c=>c.id===card.id && c.variantId===card.variantId);
+                                        // Simple dedupe check logic needs to be robust for awakened cards which are unique objects
+                                        const isSelected = selectedDeck.some(c => 
+                                            (c.isAwakened && card.isAwakened && c.uniqueId === card.uniqueId) || 
+                                            (!c.isAwakened && !card.isAwakened && c.id === card.id && c.variantId === card.variantId)
+                                        );
                                         return (
-                                            <div key={`${card.id}-${card.variantId}-${idx}`} onClick={() => { if(selectedDeck.length < 3 && !isSelected) setSelectedDeck([...selectedDeck, card]); }}>
-                                                <Card card={card} size="small" isSelected={isSelected} level={cardLevels[card.id]||0} variantId={card.variantId} />
+                                            <div key={`${card.id}-${card.variantId}-${idx}-${card.isAwakened ? 'awk' : 'norm'}`} onClick={() => { if(selectedDeck.length < 3 && !isSelected) setSelectedDeck([...selectedDeck, card]); }}>
+                                                <Card card={card} size="small" isSelected={isSelected} level={cardLevels[card.id]||0} variantId={card.variantId} isAwakened={card.isAwakened} />
                                             </div>
                                         );
                                     })}
@@ -1051,8 +1135,19 @@
                  const cards = filteredCollectionCards.slice(collectionPage*10, (collectionPage+1)*10);
                  return (
                      <div className="flex flex-col h-full">
-                         <div className="flex justify-between mb-2"><Button onClick={()=>setView('HOME')} size="small" variant="secondary"><Icons.Home size={16}/> 戻る</Button><div>Collection ({Object.values(collection).reduce((a,b)=>a+b,0)}枚)</div></div>
-                         <div className="flex-1 overflow-y-auto grid grid-cols-2 gap-2 pb-32">{cards.map((c,i)=><div key={i} onClick={()=>setSelectedCard(c)}><Card card={c} size="small" variantId={c.variantId} level={cardLevels[c.id]||0}/><div className="text-right text-xs">x{collection[`${c.id}_${c.variantId}`]}</div></div>)}</div>
+                         <div className="flex justify-between mb-2">
+                             <Button onClick={()=>setView(potionTargetSelection ? 'SHOP' : 'HOME')} size="small" variant="secondary"><Icons.Home size={16}/> 戻る</Button>
+                             <div>{potionTargetSelection ? "覚醒させるカードを選択" : `Collection (${Object.values(collection).reduce((a,b)=>a+b,0)}枚)`}</div>
+                         </div>
+                         {potionTargetSelection && <div className="bg-red-900/50 p-2 mb-2 text-center text-xs text-red-200 border border-red-500 rounded animate-pulse">タップしたカードを消費して3時間覚醒させます</div>}
+                         <div className="flex-1 overflow-y-auto grid grid-cols-2 gap-2 pb-32">
+                             {cards.map((c,i)=> (
+                                 <div key={i} onClick={() => potionTargetSelection ? handleCardSelectionForPotion(c) : setSelectedCard(c)}>
+                                     <Card card={c} size="small" variantId={c.variantId} level={cardLevels[c.id]||0}/>
+                                     <div className="text-right text-xs">x{collection[`${c.id}_${c.variantId}`]}</div>
+                                 </div>
+                             ))}
+                         </div>
                          <div className="mb-24"><PaginationControls page={collectionPage} totalPages={Math.ceil(filteredCollectionCards.length/10)} onPrev={()=>setCollectionPage(p=>p-1)} onNext={()=>setCollectionPage(p=>p+1)} /></div>
                      </div>
                  );
@@ -1060,8 +1155,10 @@
             
             const renderBattleView = () => {
                 if (!battleState) return null;
-                if (isBattleTiming) return <BattleTimer onComplete={resolveAttack} />;
-                if (isSlotBattle) return <SlotMachine onResult={resolveAttack} />;
+                const difficulty = (activeBuffs['FOCUS'] && activeBuffs['FOCUS'] > Date.now()) ? 2.0 : 1.0;
+
+                if (isBattleTiming) return <BattleTimer onComplete={resolveAttack} difficulty={difficulty} />;
+                if (isSlotBattle) return <SlotMachine onResult={resolveAttack} difficulty={difficulty} />;
                 if (battleState.finished) return (
                     <div className="flex flex-col items-center justify-center h-full space-y-6 animate-in zoom-in">
                         <h2 className={`text-5xl font-black ${battleState.won ? 'text-yellow-400' : 'text-gray-500'}`}>{battleState.won ? 'VICTORY' : 'DEFEAT'}</h2>
@@ -1078,7 +1175,7 @@
                         <div className="flex-1 flex flex-col justify-center items-center gap-8">
                              <div className="flex gap-1">{battleState.enemyTeam.map((c,i)=><div key={i} className="scale-75"><Card card={c} size="small" showPower={false} variantId={c.variantId}/></div>)}</div>
                              <div className="text-4xl font-black text-white/20">VS</div>
-                             <div className="flex gap-1">{battleState.myTeam.map((c,i)=><div key={i} className="scale-90"><Card card={c} size="small" showPower={false} variantId={c.variantId}/></div>)}</div>
+                             <div className="flex gap-1">{battleState.myTeam.map((c,i)=><div key={i} className="scale-90"><Card card={c} size="small" showPower={false} variantId={c.variantId} isAwakened={c.isAwakened}/></div>)}</div>
                         </div>
                         <div className="h-20 flex items-center justify-center pb-24">
                              {battleState.phase === 'PLAYER_TURN' && <Button onClick={startAttack} variant="danger" className="px-8 py-4 text-xl font-black shadow-lg animate-pulse">ATTACK!</Button>}
@@ -1099,7 +1196,7 @@
                     <div className="relative z-20 bg-gray-900/80 p-2 flex justify-between items-center backdrop-blur-sm border-b border-gray-700">
                         <div className="text-yellow-400 font-bold flex items-center gap-2 text-lg"><Icons.Coins /> {coins} G</div>
                         <div className="text-white font-mono bg-blue-900/50 px-2 rounded">RANK: {playerRank}</div>
-                        <div className="text-xs text-gray-400">Ver 2.2</div>
+                        <div className="text-xs text-gray-400">Ver 3.2</div>
                     </div>
 
                     <div className="relative z-10 flex-1 p-4 overflow-hidden">
@@ -1108,10 +1205,8 @@
                         {view === 'COLLECTION' && renderCollection()}
                         {view === 'DECK_SELECT' && renderDeckSelect()}
                         {view === 'BATTLE' && renderBattleView()}
+                        {view === 'SHOP' && renderShop()}
                     </div>
-
-                    {/* Persistent Footer Lane */}
-                    <TheLane onBuy={handleLaneBuy} coins={coins} />
 
                     {/* Modal */}
                     {selectedCard && (
@@ -1122,13 +1217,13 @@
                                      <Button onClick={() => {
                                          const key = `${selectedCard.id}_${selectedCard.variantId}`;
                                          if(collection[key]>=2) {
-                                             if(confirm("2枚消費して覚醒しますか？")) {
-                                                 setCollection(p=>({...p, [key]: p[key]-2}));
+                                             if(confirm("2枚消費して覚醒しますか？(1枚消費してレベルアップ)")) {
+                                                 setCollection(p=>({...p, [key]: p[key]-1}));
                                                  setCardLevels(p=>({...p, [selectedCard.id]: (p[selectedCard.id]||0)+1}));
                                                  setSelectedCard(null);
                                              }
                                          } else alert("カードが足りません(2枚必要)");
-                                     }} variant="gold" size="small">覚醒(2枚消費)</Button>
+                                     }} variant="gold" size="small">覚醒(1枚消費)</Button>
                                      <Button onClick={()=>{
                                          const key = `${selectedCard.id}_${selectedCard.variantId}`;
                                          if(collection[key]>0) {
