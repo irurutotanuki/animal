@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>アニマル・クロニクル 5150 - Ver.3.2</title>
+    <title>アニマル・クロニクル 5150 - Ver.3.4.1</title>
     <!-- React & ReactDOM -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -124,9 +124,9 @@
         ];
 
         const POTION_TYPES = [
-            { id: 'LIFE_AWAKENING', name: '命覚醒ポーション', duration: 180 * 60 * 1000, desc: '指定カードを3時間覚醒(HP/ATK 2倍)させる。効果終了後、そのカードは消滅する。', type: 'CARD_BUFF', cost: 3000 },
-            { id: 'RICH', name: '富豪のポーション', duration: 60 * 60 * 1000, desc: '1時間、獲得コインが2倍になる。', type: 'PLAYER_BUFF', cost: 2000 },
-            { id: 'FOCUS', name: '集中力の秘薬', duration: 30 * 60 * 1000, desc: '30分、ミニゲームが簡単になる。', type: 'PLAYER_BUFF', cost: 1000 },
+            { id: 'LIFE_AWAKENING', name: '命覚醒ポーション', duration: 180 * 60 * 1000, desc: '指定カードを3時間覚醒(HP/ATK 2倍)させる。効果終了後、そのカードは消滅する。', type: 'CARD_BUFF', costType: 'CARD', costAmount: 5, multiplier: 2.0 },
+            { id: 'RICH', name: '富豪のポーション', duration: 60 * 60 * 1000, desc: '1時間、獲得コイン2倍', type: 'COIN_BUFF', costType: 'COIN', costAmount: 2000, multiplier: 2.0 },
+            { id: 'FOCUS', name: '集中力の秘薬', duration: 30 * 60 * 1000, desc: '30分、ミニゲームが簡単になる。', type: 'SLOW_BUFF', costType: 'COIN', costAmount: 1000, multiplier: 1.0 },
         ];
 
         const CARD_DATA_RAW = {
@@ -421,9 +421,9 @@
             const [idleRewards, setIdleRewards] = useState({ coins: 0, lastCheck: Date.now() });
             
             // New States
-            const [awakenedCards, setAwakenedCards] = useState([]); // [{...card, uniqueId, expiresAt}]
-            const [activeBuffs, setActiveBuffs] = useState({}); // { RICH: expiresAt, FOCUS: expiresAt }
-            const [potionTargetSelection, setPotionTargetSelection] = useState(false); // Mode to select card for potion
+            const [awakenedCards, setAwakenedCards] = useState([]); 
+            const [activeBuffs, setActiveBuffs] = useState({}); 
+            const [potionTargetSelection, setPotionTargetSelection] = useState(false); 
 
             // Event
             const [currentEvent, setCurrentEvent] = useState(null);
@@ -441,24 +441,39 @@
             const ITEMS_PER_PAGE_DECK = 10; 
 
             useEffect(() => {
-                const saved = localStorage.getItem('animalChronicleData_v3_2'); 
+                let saved = localStorage.getItem('animalChronicleData_v3_4_1'); // Updated key
+                if (!saved) saved = localStorage.getItem('animalChronicleData_v3_4');
+                if (!saved) saved = localStorage.getItem('animalChronicleData_v3_3');
+                if (!saved) saved = localStorage.getItem('animalChronicleData_v3_2');
+
                 let lastLoginDate = "";
                 if (saved) {
-                    const parsed = JSON.parse(saved);
-                    setCoins(parsed.coins || 1000);
-                    setPlayerRank(parsed.playerRank || 1); 
-                    setCollection(parsed.collection || {});
-                    setCardLevels(parsed.cardLevels || {});
-                    setLastFreePackClaim(parsed.lastFreePackClaim || 0);
-                    setLastDailyReset(parsed.lastDailyReset || "");
-                    setActiveMissions(parsed.activeMissions || []);
-                    setMissionProgress(parsed.missionProgress || {});
-                    setClaimedMissions(parsed.claimedMissions || []);
-                    lastLoginDate = parsed.lastLoginDate || "";
-                    setIdleRewards(parsed.idleRewards || { coins: 0, lastCheck: Date.now() });
-                    setAwakenedCards(parsed.awakenedCards || []);
-                    setActiveBuffs(parsed.activeBuffs || {});
+                    try {
+                        const parsed = JSON.parse(saved);
+                        
+                        // NaN Check and Repair
+                        let loadedCoins = Number(parsed.coins);
+                        if (isNaN(loadedCoins) || loadedCoins === null) loadedCoins = 1000;
+                        setCoins(loadedCoins);
+
+                        setPlayerRank(Number(parsed.playerRank) || 1); 
+                        setCollection(parsed.collection || {});
+                        setCardLevels(parsed.cardLevels || {});
+                        setLastFreePackClaim(parsed.lastFreePackClaim || 0);
+                        setLastDailyReset(parsed.lastDailyReset || "");
+                        setActiveMissions(parsed.activeMissions || []);
+                        setMissionProgress(parsed.missionProgress || {});
+                        setClaimedMissions(parsed.claimedMissions || []);
+                        lastLoginDate = parsed.lastLoginDate || "";
+                        setIdleRewards(parsed.idleRewards || { coins: 0, lastCheck: Date.now() });
+                        setAwakenedCards(parsed.awakenedCards || []);
+                        setActiveBuffs(parsed.activeBuffs || {});
+                    } catch (e) {
+                        console.error("Data load error", e);
+                        setCoins(1000);
+                    }
                 }
+                
                 const today = new Date().toLocaleDateString('ja-JP');
                 if (lastLoginDate !== today) setTimeout(() => setLoginBonus(500), 1000);
                 
@@ -466,7 +481,7 @@
                 triggerRandomEvent();
                 
                 const now = Date.now();
-                const last = saved ? JSON.parse(saved).idleRewards?.lastCheck || now : now;
+                const last = saved ? (JSON.parse(saved).idleRewards?.lastCheck || now) : now;
                 const diffMinutes = Math.floor((now - last) / 60000);
                 if (diffMinutes > 0) {
                     const earned = diffMinutes * 10; 
@@ -478,7 +493,7 @@
 
             useEffect(() => {
                 const today = new Date().toLocaleDateString('ja-JP');
-                localStorage.setItem('animalChronicleData_v3_2', JSON.stringify({
+                localStorage.setItem('animalChronicleData_v3_4_1', JSON.stringify({
                     coins, playerRank, collection, cardLevels, lastFreePackClaim, lastDailyReset, activeMissions, missionProgress, claimedMissions, lastLoginDate: today, idleRewards: { ...idleRewards, lastCheck: Date.now() },
                     awakenedCards, activeBuffs
                 }));
@@ -489,16 +504,11 @@
                 const interval = setInterval(() => {
                     const now = Date.now();
                     
-                    // Expire Awakened Cards
                     setAwakenedCards(prev => {
                         const next = prev.filter(c => c.expiresAt > now);
-                        if (next.length !== prev.length) {
-                            // alert("命覚醒ポーションの効果が切れ、対象カードが消滅しました。"); // Annoying if alerts every tick?
-                        }
                         return next;
                     });
 
-                    // Expire Buffs
                     setActiveBuffs(prev => {
                         const next = { ...prev };
                         let changed = false;
@@ -511,7 +521,6 @@
                         return changed ? next : prev;
                     });
 
-                    // Free Pack Timer
                     const msSinceClaim = now - lastFreePackClaim;
                     const msCooldown = 24 * 60 * 60 * 1000;
                     if (msSinceClaim >= msCooldown) { setFreePackProgress(100); setTimeUntilFreePack("READY"); }
@@ -690,12 +699,15 @@
 
             const handlePotionBuy = (potion) => {
                 if (potion.costType === 'CARD') {
-                    // Start selection mode for Life Awakening
                     setPotionTargetSelection(true);
                     setView('COLLECTION');
                     alert("命覚醒させるカードをコレクションから選択してください。\n※選択したカード1枚が消費され、3時間限定の強化個体に生まれ変わります。");
                 } else {
-                    // Coin purchase
+                    if (activeBuffs[potion.id] && activeBuffs[potion.id] > Date.now()) {
+                        alert("すでに効果が発動しています！");
+                        return;
+                    }
+
                     if (coins < potion.costAmount) { alert("お金が足りません！"); return; }
                     if (!confirm(`${potion.name}を購入して使用しますか？`)) return;
                     
@@ -714,14 +726,12 @@
 
                 if (!confirm(`${card.name} に命覚醒ポーションを使用しますか？\n\n【警告】\nこのカード1枚を消費し、3時間限定の強力な個体を生成します。\n効果終了後、生成された個体は消滅します。（元のカードは戻りません）`)) return;
 
-                // Consume card
                 setCollection(prev => ({ ...prev, [key]: prev[key] - 1 }));
                 
-                // Add to Awakened Cards
                 const awakened = {
                     ...card,
-                    uniqueId: Date.now(), // Unique ID for this instance
-                    expiresAt: Date.now() + (3 * 60 * 60 * 1000), // 3 hours
+                    uniqueId: Date.now(), 
+                    expiresAt: Date.now() + (3 * 60 * 60 * 1000), 
                     isAwakened: true
                 };
                 setAwakenedCards(prev => [...prev, awakened]);
@@ -810,7 +820,6 @@
                     setBattleState(prev => ({ ...prev, enHp: 0, processingWin: true }));
                     
                     let baseReward = battleState.isRank ? 2000 * (1 + playerRank * 0.1) : 1000; 
-                    // Rich Potion Multiplier
                     if (activeBuffs['RICH'] && activeBuffs['RICH'] > Date.now()) {
                         baseReward *= 2.0;
                     }
@@ -913,7 +922,9 @@
                 );
             };
 
-            const renderShop = () => (
+            const renderShop = () => {
+                const now = Date.now();
+                return (
                 <div className="flex flex-col h-full animate-in fade-in p-2">
                     <div className="flex justify-between items-center mb-4 shrink-0">
                         <Button onClick={() => setView('HOME')} variant="secondary" size="small"><Icons.Home size={16}/> 戻る</Button>
@@ -922,7 +933,9 @@
                     </div>
                     
                     <div className="flex-1 overflow-y-auto pb-20 space-y-4">
-                        {POTION_TYPES.map(potion => (
+                        {POTION_TYPES.map(potion => {
+                            const isActive = activeBuffs[potion.id] && activeBuffs[potion.id] > now;
+                            return (
                             <div key={potion.id} className="bg-gray-800 border border-gray-600 p-4 rounded-xl flex flex-col gap-2 shadow-lg">
                                 <div className="flex justify-between items-start">
                                     <h3 className="text-xl font-bold text-blue-300 flex items-center gap-2"><Icons.Flask /> {potion.name}</h3>
@@ -936,15 +949,17 @@
                                 <Button 
                                     onClick={() => handlePotionBuy(potion)} 
                                     variant={potion.costType === 'CARD' ? 'danger' : 'primary'}
-                                    disabled={potion.costType === 'COIN' && coins < potion.costAmount}
+                                    disabled={(potion.costType === 'COIN' && coins < potion.costAmount) || isActive}
                                 >
-                                    {potion.costType === 'CARD' ? '対象を選択して使用' : '購入して使用'}
+                                    {isActive ? '効果発動中' : (potion.costType === 'CARD' ? '対象を選択して使用' : '購入して使用')}
                                 </Button>
                             </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
-            );
+                );
+            };
 
             const renderDeckSelect = () => {
                 let myCards = []; 
@@ -1135,19 +1150,8 @@
                  const cards = filteredCollectionCards.slice(collectionPage*10, (collectionPage+1)*10);
                  return (
                      <div className="flex flex-col h-full">
-                         <div className="flex justify-between mb-2">
-                             <Button onClick={()=>setView(potionTargetSelection ? 'SHOP' : 'HOME')} size="small" variant="secondary"><Icons.Home size={16}/> 戻る</Button>
-                             <div>{potionTargetSelection ? "覚醒させるカードを選択" : `Collection (${Object.values(collection).reduce((a,b)=>a+b,0)}枚)`}</div>
-                         </div>
-                         {potionTargetSelection && <div className="bg-red-900/50 p-2 mb-2 text-center text-xs text-red-200 border border-red-500 rounded animate-pulse">タップしたカードを消費して3時間覚醒させます</div>}
-                         <div className="flex-1 overflow-y-auto grid grid-cols-2 gap-2 pb-32">
-                             {cards.map((c,i)=> (
-                                 <div key={i} onClick={() => potionTargetSelection ? handleCardSelectionForPotion(c) : setSelectedCard(c)}>
-                                     <Card card={c} size="small" variantId={c.variantId} level={cardLevels[c.id]||0}/>
-                                     <div className="text-right text-xs">x{collection[`${c.id}_${c.variantId}`]}</div>
-                                 </div>
-                             ))}
-                         </div>
+                         <div className="flex justify-between mb-2"><Button onClick={()=>setView('HOME')} size="small" variant="secondary"><Icons.Home size={16}/> 戻る</Button><div>Collection ({Object.values(collection).reduce((a,b)=>a+b,0)}枚)</div></div>
+                         <div className="flex-1 overflow-y-auto grid grid-cols-2 gap-2 pb-32">{cards.map((c,i)=><div key={i} onClick={()=>setSelectedCard(c)}><Card card={c} size="small" variantId={c.variantId} level={cardLevels[c.id]||0}/><div className="text-right text-xs">x{collection[`${c.id}_${c.variantId}`]}</div></div>)}</div>
                          <div className="mb-24"><PaginationControls page={collectionPage} totalPages={Math.ceil(filteredCollectionCards.length/10)} onPrev={()=>setCollectionPage(p=>p-1)} onNext={()=>setCollectionPage(p=>p+1)} /></div>
                      </div>
                  );
@@ -1155,10 +1159,8 @@
             
             const renderBattleView = () => {
                 if (!battleState) return null;
-                const difficulty = (activeBuffs['FOCUS'] && activeBuffs['FOCUS'] > Date.now()) ? 2.0 : 1.0;
-
-                if (isBattleTiming) return <BattleTimer onComplete={resolveAttack} difficulty={difficulty} />;
-                if (isSlotBattle) return <SlotMachine onResult={resolveAttack} difficulty={difficulty} />;
+                if (isBattleTiming) return <BattleTimer onComplete={resolveAttack} />;
+                if (isSlotBattle) return <SlotMachine onResult={resolveAttack} />;
                 if (battleState.finished) return (
                     <div className="flex flex-col items-center justify-center h-full space-y-6 animate-in zoom-in">
                         <h2 className={`text-5xl font-black ${battleState.won ? 'text-yellow-400' : 'text-gray-500'}`}>{battleState.won ? 'VICTORY' : 'DEFEAT'}</h2>
@@ -1196,7 +1198,7 @@
                     <div className="relative z-20 bg-gray-900/80 p-2 flex justify-between items-center backdrop-blur-sm border-b border-gray-700">
                         <div className="text-yellow-400 font-bold flex items-center gap-2 text-lg"><Icons.Coins /> {coins} G</div>
                         <div className="text-white font-mono bg-blue-900/50 px-2 rounded">RANK: {playerRank}</div>
-                        <div className="text-xs text-gray-400">Ver 3.2</div>
+                        <div className="text-xs text-gray-400">Ver 3.4.1</div>
                     </div>
 
                     <div className="relative z-10 flex-1 p-4 overflow-hidden">
