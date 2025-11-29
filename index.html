@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>アニマル・クロニクル 5150 - Ver.3.6.0</title>
+    <title>アニマル・クロニクル 5150 - Ver.3.7.0</title>
     <!-- React & ReactDOM -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -74,6 +74,7 @@
             Flask: (p) => <IconBase {...p}><path d="M8.5 2h7"/><path d="M12 2v4"/><path d="m12 6-5 13a3 3 0 0 0 3 3h4a3 3 0 0 0 3-3l-5-13Z"/></IconBase>,
             ShoppingBag: (p) => <IconBase {...p}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></IconBase>,
             Trash: (p) => <IconBase {...p}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></IconBase>,
+            Hammer: (p) => <IconBase {...p}><path d="m15 12-8.5 8.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L12 9"/><path d="M17.64 15 22 10.64"/><path d="m20.91 11.7-1.25-1.25c-.6-.6-.93-1.4-.93-2.25V2.46V2a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v5.8c0 .85-.33 1.65-.93 2.25L9.64 11.2"/></IconBase>,
         };
 
         // ==========================================
@@ -85,13 +86,13 @@
         };
 
         const RARITY_CONFIG = {
-            SECRET_GOD: { color: 'from-gray-900 via-purple-900 to-black', border: 'border-purple-500', text: 'text-purple-200', probability: 0.0005, powerBase: 15000, hpBase: 50000, cost: 20, sell: 50000, buy: 500000 },
-            SECRET: { color: 'from-gray-800 via-gray-700 to-gray-900', border: 'border-gray-400', text: 'text-gray-300', probability: 0.005, powerBase: 6000, hpBase: 20000, cost: 6, sell: 3000, buy: 15000 },
-            GOD: { color: 'from-indigo-900 via-purple-900 to-pink-900', border: 'border-yellow-400', text: 'text-yellow-300', probability: 0.002, powerBase: 9500, hpBase: 33000, cost: 10, sell: 5000, buy: 50000 },
-            LEGEND: { color: 'from-yellow-700 to-yellow-900', border: 'border-yellow-500', text: 'text-yellow-400', probability: 0.01, powerBase: 8000, hpBase: 28000, cost: 8, sell: 2000, buy: 12000 },
-            ULTIMATE: { color: 'from-red-800 to-red-950', border: 'border-red-500', text: 'text-red-400', probability: 0.04, powerBase: 6500, hpBase: 22000, cost: 6, sell: 800, buy: 5000 },
-            EPIC: { color: 'from-purple-800 to-indigo-900', border: 'border-purple-400', text: 'text-purple-300', probability: 0.10, powerBase: 4500, hpBase: 15000, cost: 5, sell: 300, buy: 2000 },
-            RARE: { color: 'from-blue-700 to-blue-900', border: 'border-blue-400', text: 'text-blue-300', probability: 0.25, powerBase: 2500, hpBase: 8500, cost: 3, sell: 100, buy: 800 },
+            SECRET_GOD: { color: 'from-gray-900 via-purple-900 to-black', border: 'border-purple-500', text: 'text-purple-200', probability: 0.0005, powerBase: 15000, hpBase: 50000, cost: 20, sell: 2500, buy: 500000 },
+            SECRET: { color: 'from-gray-800 via-gray-700 to-gray-900', border: 'border-gray-400', text: 'text-gray-300', probability: 0.005, powerBase: 6000, hpBase: 20000, cost: 6, sell: 2000, buy: 15000 },
+            GOD: { color: 'from-indigo-900 via-purple-900 to-pink-900', border: 'border-yellow-400', text: 'text-yellow-300', probability: 0.002, powerBase: 9500, hpBase: 33000, cost: 10, sell: 1500, buy: 50000 },
+            LEGEND: { color: 'from-yellow-700 to-yellow-900', border: 'border-yellow-500', text: 'text-yellow-400', probability: 0.01, powerBase: 8000, hpBase: 28000, cost: 8, sell: 350, buy: 12000 },
+            ULTIMATE: { color: 'from-red-800 to-red-950', border: 'border-red-500', text: 'text-red-400', probability: 0.04, powerBase: 6500, hpBase: 22000, cost: 6, sell: 200, buy: 5000 },
+            EPIC: { color: 'from-purple-800 to-indigo-900', border: 'border-purple-400', text: 'text-purple-300', probability: 0.10, powerBase: 4500, hpBase: 15000, cost: 5, sell: 100, buy: 2000 },
+            RARE: { color: 'from-blue-700 to-blue-900', border: 'border-blue-400', text: 'text-blue-300', probability: 0.25, powerBase: 2500, hpBase: 8500, cost: 3, sell: 50, buy: 800 },
             COMMON: { color: 'from-slate-600 to-slate-800', border: 'border-slate-400', text: 'text-slate-300', probability: 0.59, powerBase: 1000, hpBase: 3500, cost: 1, sell: 10, buy: 200 }
         };
 
@@ -443,7 +444,10 @@
             const [potionTargetSelection, setPotionTargetSelection] = useState(false); 
             const [potionBaseCard, setPotionBaseCard] = useState(null); 
             const [potionSacrifices, setPotionSacrifices] = useState([]); 
-            const [showRitualModal, setShowRitualModal] = useState(false); // New modal trigger
+            const [showRitualModal, setShowRitualModal] = useState(false); 
+
+            // Collection Tab
+            const [collectionTab, setCollectionTab] = useState('NORMAL'); // 'NORMAL' or 'AWAKENED'
 
             // Event
             const [currentEvent, setCurrentEvent] = useState(null);
@@ -461,7 +465,8 @@
             const ITEMS_PER_PAGE_DECK = 10; 
 
             useEffect(() => {
-                let saved = localStorage.getItem('animalChronicleData_v3_6_0'); 
+                let saved = localStorage.getItem('animalChronicleData_v3_7_0'); 
+                if (!saved) saved = localStorage.getItem('animalChronicleData_v3_6_0'); 
                 if (!saved) saved = localStorage.getItem('animalChronicleData_v3_5_3'); 
                 if (!saved) saved = localStorage.getItem('animalChronicleData_v3_5_2'); 
 
@@ -510,7 +515,7 @@
 
             useEffect(() => {
                 const today = new Date().toLocaleDateString('ja-JP');
-                localStorage.setItem('animalChronicleData_v3_6_0', JSON.stringify({
+                localStorage.setItem('animalChronicleData_v3_7_0', JSON.stringify({
                     coins, playerRank, collection, cardLevels, lastFreePackClaim, lastDailyReset, activeMissions, missionProgress, claimedMissions, lastLoginDate: today, idleRewards: { ...idleRewards, lastCheck: Date.now() },
                     awakenedCards, activeBuffs
                 }));
@@ -841,8 +846,8 @@
                 setPotionSacrifices([]);
                 setShowRitualModal(false);
                 setView('COLLECTION');
-                setCollectionPage(0); // 覚醒カードを見るためにページトップへ
-                alert("儀式成功！\n超・命覚醒したカードが生成されました！\nコレクションの一番上に表示されます。");
+                setCollectionTab('AWAKENED'); // 覚醒タブへ移動
+                alert("儀式成功！\n超・命覚醒したカードが生成されました！");
             };
 
             const startRankBattle = () => { confirmDeckAndStart(true); };
@@ -1012,7 +1017,7 @@
                     <div className="grid grid-cols-2 gap-2 w-full max-w-md px-4">
                         <Button onClick={() => setView('GACHA')} variant="gold" className="py-4 text-lg flex-col"><div className="flex items-center gap-2"><Icons.Sparkles /> スカウト</div></Button>
                         <Button onClick={() => { setView('DECK_SELECT'); setSelectedDeck([]); }} variant="danger" className="py-4 text-lg flex-col"><div className="flex items-center gap-2"><Icons.Zap /> バトル</div></Button>
-                        <Button onClick={() => { setView('COLLECTION'); setCollectionPage(0); }} variant="primary" className="py-4 text-lg flex-col"><div className="flex items-center gap-2"><Icons.Search /> カード一覧</div></Button>
+                        <Button onClick={() => { setView('COLLECTION'); setCollectionPage(0); setCollectionTab('NORMAL'); }} variant="primary" className="py-4 text-lg flex-col"><div className="flex items-center gap-2"><Icons.Search /> カード一覧</div></Button>
                         <Button onClick={() => setView('SHOP')} variant="purple" className="py-4 text-lg flex-col"><div className="flex items-center gap-2"><Icons.ShoppingBag /> ショップ</div></Button>
                         
                         {/* Idle Button */}
@@ -1250,10 +1255,9 @@
             };
 
             const renderCollection = () => {
-                 const cards = filteredCollectionCards.slice(collectionPage*10, (collectionPage+1)*10);
-                 
                  // 儀式中用のUI
                  if (potionTargetSelection) {
+                     const cards = filteredCollectionCards.slice(collectionPage*10, (collectionPage+1)*10);
                      return (
                          <div className="flex flex-col h-full">
                             {/* 儀式ステータスヘッダー */}
@@ -1311,37 +1315,40 @@
                      )
                  }
 
+                 // 通常一覧表示
+                 let cardsToDisplay = [];
+                 if (collectionTab === 'AWAKENED') {
+                     cardsToDisplay = awakenedCards.map(c => ({...c, isAwakened: true}));
+                 } else {
+                     cardsToDisplay = filteredCollectionCards;
+                 }
+                 
+                 const totalPages = Math.ceil(cardsToDisplay.length / 10);
+                 const pagedCards = cardsToDisplay.slice(collectionPage * 10, (collectionPage + 1) * 10);
+
                  return (
                      <div className="flex flex-col h-full">
-                         <div className="flex justify-between mb-2 shrink-0">
+                         <div className="flex justify-between items-center mb-2 shrink-0">
                              <Button onClick={()=>setView('HOME')} size="small" variant="secondary"><Icons.Home size={16}/> 戻る</Button>
-                             <div>Collection ({Object.values(collection).reduce((a,b)=>a+b,0)}枚)</div>
+                             <div className="flex gap-2">
+                                 <button onClick={()=>{setCollectionTab('NORMAL'); setCollectionPage(0);}} className={`px-3 py-1 rounded text-xs font-bold ${collectionTab==='NORMAL'?'bg-blue-600 text-white':'bg-gray-700 text-gray-400'}`}>所持カード</button>
+                                 <button onClick={()=>{setCollectionTab('AWAKENED'); setCollectionPage(0);}} className={`px-3 py-1 rounded text-xs font-bold ${collectionTab==='AWAKENED'?'bg-red-600 text-white animate-pulse-red':'bg-gray-700 text-gray-400'}`}>覚醒中</button>
+                             </div>
                          </div>
 
                          <div className="flex-1 overflow-y-auto pb-32 p-1">
-                            {/* Awakened Cards Section */}
-                            {awakenedCards.length > 0 && (
-                                <div className="mb-4">
-                                    <h3 className="text-red-400 font-bold mb-2 border-b border-red-900 pb-1">覚醒中のカード (残り時間あり)</h3>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {awakenedCards.map((c, i) => (
-                                            <div key={`awk-${i}`} onClick={() => setSelectedCard({...c, isAwakened: true})}>
-                                                <Card card={c} size="small" isAwakened={true} variantId={c.variantId} level={cardLevels[c.id]||0} />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
                              <div className="grid grid-cols-2 gap-2">
-                                 {cards.map((c,i)=> (
+                                 {pagedCards.map((c,i)=> (
                                     <div key={i} onClick={() => setSelectedCard(c)}>
-                                         <Card card={c} size="small" variantId={c.variantId} level={cardLevels[c.id]||0}/>
-                                         <div className="text-right text-xs">所持: {collection[`${c.id}_${c.variantId}`]}</div>
+                                         <Card card={c} size="small" variantId={c.variantId} level={cardLevels[c.id]||0} isAwakened={c.isAwakened}/>
+                                         {!c.isAwakened && <div className="text-right text-xs">所持: {collection[`${c.id}_${c.variantId}`]}</div>}
+                                         {c.isAwakened && <div className="text-right text-xs text-red-400">残り: {Math.ceil((c.expiresAt - Date.now())/60000)}分</div>}
                                     </div>
                                  ))}
                              </div>
-                             <div className="mt-4"><PaginationControls page={collectionPage} totalPages={Math.ceil(filteredCollectionCards.length/10)} onPrev={()=>setCollectionPage(p=>Math.max(0,p-1))} onNext={()=>setCollectionPage(p=>Math.min(totalPages-1,p+1))} /></div>
+                             {pagedCards.length === 0 && <div className="text-center text-gray-500 mt-10">カードがありません</div>}
+                             
+                             <div className="mt-4"><PaginationControls page={collectionPage} totalPages={totalPages} onPrev={()=>setCollectionPage(p=>Math.max(0,p-1))} onNext={()=>setCollectionPage(p=>Math.min(totalPages-1,p+1))} /></div>
                          </div>
                      </div>
                  );
@@ -1389,8 +1396,15 @@
                     {/* Header Info */}
                     <div className="relative z-20 bg-gray-900/80 p-2 flex justify-between items-center backdrop-blur-sm border-b border-gray-700">
                         <div className="text-yellow-400 font-bold flex items-center gap-2 text-lg"><Icons.Coins /> {coins} G</div>
-                        <div className="text-white font-mono bg-blue-900/50 px-2 rounded">RANK: {playerRank}</div>
-                        <div className="text-xs text-gray-400">Ver 3.6.0</div>
+                        <div className="flex items-center gap-2">
+                            <div className="text-white font-mono bg-blue-900/50 px-2 rounded">RANK: {playerRank}</div>
+                            <button onClick={() => {
+                                if(confirm("ランクをリセットしますか？\nランクが1に戻り、敵も弱くなります。")) {
+                                    setPlayerRank(1);
+                                }
+                            }} className="bg-gray-700 hover:bg-gray-600 text-white text-xs px-2 py-1 rounded border border-gray-500"><Icons.RotateCcw size={12}/></button>
+                        </div>
+                        <div className="text-xs text-gray-400">Ver 3.7.0</div>
                     </div>
 
                     <div className="relative z-10 flex-1 p-4 overflow-hidden">
@@ -1405,33 +1419,51 @@
                     {/* Card Detail Modal */}
                     {selectedCard && !potionTargetSelection && (
                         <div className="fixed inset-0 bg-black/90 z-[9999] flex flex-col items-center justify-center p-4" onClick={() => setSelectedCard(null)}>
-                             <div className="bg-gray-800 p-4 rounded-xl" onClick={e=>e.stopPropagation()}>
-                                 <Card card={selectedCard} showPower={true} level={cardLevels[selectedCard.id]||0} variantId={selectedCard.variantId} isAwakened={selectedCard.isAwakened}/>
+                             <div className="bg-gray-800 p-4 rounded-xl relative max-w-sm w-full" onClick={e=>e.stopPropagation()}>
+                                 <Card card={selectedCard} showPower={true} level={cardLevels[selectedCard.id]||0} variantId={selectedCard.variantId} isAwakened={selectedCard.isAwakened} className="mx-auto mb-4"/>
+                                 
                                  {!selectedCard.isAwakened && (
-                                     <div className="mt-4 flex gap-2 justify-center">
+                                     <div className="flex flex-col gap-2">
+                                         {/* 合成ボタン */}
                                          <Button onClick={() => {
                                              const key = `${selectedCard.id}_${selectedCard.variantId}`;
-                                             if(collection[key]>=2) {
-                                                 if(confirm("2枚消費してレベルアップしますか？")) {
+                                             if(collection[key] >= 2) {
+                                                 if(confirm("【合成】\n同じカードを2枚消費してレベルアップさせますか？\n(所持数が1減り、強くなります)")) {
                                                      setCollection(p=>({...p, [key]: p[key]-1}));
                                                      setCardLevels(p=>({...p, [selectedCard.id]: (p[selectedCard.id]||0)+1}));
+                                                     alert("レベルアップしました！");
                                                      setSelectedCard(null);
                                                  }
-                                             } else alert("カードが足りません(2枚必要)");
-                                         }} variant="gold" size="small">強化(1枚消費)</Button>
+                                             } else {
+                                                 alert("合成には同じカードが2枚必要です。\n(現在: " + collection[key] + "枚)");
+                                             }
+                                         }} variant="gold" className="w-full"><Icons.Hammer size={18}/> 合成 (2枚で強化)</Button>
+
+                                         {/* 売却ボタン */}
                                          <Button onClick={()=>{
                                              const key = `${selectedCard.id}_${selectedCard.variantId}`;
                                              if(collection[key]>0) {
-                                                  if(confirm("売却しますか？")) {
+                                                  const rarityConfig = RARITY_CONFIG[selectedCard.rarity];
+                                                  const sellPrice = rarityConfig.sell;
+                                                  if(confirm(`【売却】\nこのカードを売却して ${sellPrice} G を入手しますか？`)) {
                                                       setCollection(p=>({...p, [key]: p[key]-1}));
-                                                      setCoins(c=>c+100); 
+                                                      setCoins(c=>c+sellPrice); 
                                                       setSelectedCard(null);
                                                   }
                                              }
-                                         }} variant="secondary" size="small">売却</Button>
+                                         }} variant="secondary" className="w-full"><Icons.Trash size={18}/> 売却</Button>
+                                         
+                                         <div className="text-center text-xs text-gray-400 mt-2">
+                                             売却価格: {RARITY_CONFIG[selectedCard.rarity].sell} G
+                                         </div>
                                      </div>
                                  )}
-                                 {selectedCard.isAwakened && <div className="text-center mt-2 text-red-400 text-xs">このカードは覚醒中です</div>}
+                                 {selectedCard.isAwakened && (
+                                     <div className="text-center mt-2 text-red-400 text-sm font-bold">
+                                         <p>覚醒状態のため合成・売却不可</p>
+                                         <p className="text-xs font-normal text-gray-400">効果終了までお待ちください</p>
+                                     </div>
+                                 )}
                              </div>
                         </div>
                     )}
