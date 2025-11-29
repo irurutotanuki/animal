@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>アニマル・クロニクル 5150 - Ver.3.4.1</title>
+    <title>アニマル・クロニクル 5150 - Ver.3.6.0</title>
     <!-- React & ReactDOM -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -50,7 +50,9 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, useMemo, useCallback } = React;
 
-        // --- ICONS ---
+        // ==========================================
+        // 1. ICONS
+        // ==========================================
         const IconBase = ({ children, className, size = 24, ...props }) => (
             <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>{children}</svg>
         );
@@ -71,19 +73,15 @@
             Box: (p) => <IconBase {...p}><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></IconBase>,
             Flask: (p) => <IconBase {...p}><path d="M8.5 2h7"/><path d="M12 2v4"/><path d="m12 6-5 13a3 3 0 0 0 3 3h4a3 3 0 0 0 3-3l-5-13Z"/></IconBase>,
             ShoppingBag: (p) => <IconBase {...p}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></IconBase>,
+            Trash: (p) => <IconBase {...p}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></IconBase>,
         };
 
-        // --- DATA ---
+        // ==========================================
+        // 2. DATA & CONSTANTS
+        // ==========================================
         const ANIMAL_EMOJIS = {
             "アザトース": "🌌", "ヨルムンガンド": "🐍", "クトゥルフ": "🐙", "八咫烏": "🐦‍⬛", "白澤": "🦁", "バク": "🛌", "九頭龍": "🐲", "金鵄": "🦅", "開発者": "✋", "虚無": "🕳️", "ラプラス": "🎲", "ウロボロス": "♾️", "スカイフィッシュ": "🥢", "フラットウッズ": "👽", "モスマン": "🦋", "ジャージー": "🐴", "モンゴリアン": "🐛", "ドーバー": "👽", "イエティ": "🦍", "シャドー": "👥", "ニンゲン": "👻", "人面犬": "🐕", "シュレーディンガー": "📦", "パブロフ": "🔔", "バタフライ": "🌪️", "ライカ": "🚀", "ミッシング": "🦴", "招き猫": "🐱", "名もなき": "👤", "エラー": "👾",
             "ライオン": "🦁", "ドラゴン": "🐉", "クジラ": "🐋", "フェニックス": "🦅", "クラーケン": "🦑", "グリフォン": "🦅", "ティラノサウルス": "🦖", "マンモス": "🦣", "サラマンダー": "🦎", "ペガサス": "🦄", "ヒドラ": "🐍", "狐": "🦊", "スフィンクス": "🗿", "ゴリラ": "🦍", "サメ": "🦈", "ペンギン": "🐧", "サイ": "🦏", "カマキリ": "🦗", "スコーピオン": "🦂", "ハヤブサ": "🦅", "アナコンダ": "🐍", "タイガー": "🐯", "ベア": "🐻", "クロコダイル": "🐊", "イール": "🐟", "フロッグ": "🐸", "カブトムシ": "🪲", "イーグル": "🦅", "ムササビ": "🐿️", "カメレオン": "🦎", "アルマジロ": "🦔", "コウモリ": "🦇", "オオカミ": "🐺", "ゾウ": "🐘", "チーター": "🐆", "ヒョウ": "🐆", "ジャガー": "🐆", "カバ": "🦛", "キリン": "🦒", "バッファロー": "🐃", "イノシシ": "🐗", "カンガルー": "🦘", "トカゲ": "🦎", "ワニ": "🐊", "ヘビ": "🐍", "コブラ": "🐍", "ワシ": "🦅", "コンドル": "🦅", "フクロウ": "🦉", "ダチョウ": "🐦", "シャチ": "🐬", "イカ": "🦑", "エイ": "🐟", "ピラニア": "🐟", "スズメバチ": "🐝", "クワガタ": "🪲", "トンボ": "🪁", "クモ": "🕷️", "ムカデ": "🐛", "パンダ": "🐼", "サル": "🐒", "オランウータン": "🦧", "ハムスター": "🐹", "ネズミ": "🐭", "リス": "🐿️", "ウサギ": "🐰", "ネコ": "🐱", "イヌ": "🐶", "ウマ": "🐴", "ウシ": "🐮", "ブタ": "🐷", "ヒツジ": "🐑", "ヤギ": "🐐", "トリ": "🐔", "ニワトリ": "🐔", "ヒヨコ": "🐥", "カモ": "🦆", "ツル": "🦢", "ハト": "🕊️", "カラス": "🐦‍⬛", "インコ": "🦜", "オウム": "🦜", "カエル": "🐸", "カメ": "🐢", "サカナ": "🐟", "タコ": "🐙", "エビ": "🦐", "カニ": "🦀", "貝": "🐚", "虫": "🐛", "チョウ": "🦋", "ハチ": "🐝", "テントウムシ": "🐞", "アリ": "🐜", "ヌー": "🐂", "ラクダ": "🐫", "アルパカ": "🦙", "ラマ": "🦙", "ロバ": "🫏", "柴犬": "🐕", "ドーベルマン": "🐕‍🦺", "土佐犬": "🐕", "セントバーナード": "🐶", "ペルシャ猫": "🐈", "三毛猫": "🐈", "黒猫": "🐈‍⬛", "ヤマネコ": "🐱", "アライグマ": "🦝", "タヌキ": "🍃", "イタチ": "🦦", "スカンク": "🦨", "ハリネズミ": "🦔", "ヤマアラシ": "🦔", "モグラ": "🕳️", "ビーバー": "🦫", "カピバラ": "🥔", "カワウソ": "🦦", "ラッコ": "🦦", "アザラシ": "🦭", "アシカ": "🦭", "セイウチ": "🦭", "ジュゴン": "🐋", "イルカ": "🐬", "マンボウ": "🐟", "アンコウ": "🔦", "タツノオトシゴ": "🐉", "ウミガメ": "🐢", "フラミンゴ": "🦩", "クジャク": "🦚", "白鳥": "🦢", "キジ": "🐦", "キツツキ": "🐦", "カワセミ": "🐦", "ツバメ": "🐦", "トノサマガエル": "🐸", "アマガエル": "🐸", "ウーパールーパー": "🦎", "イモリ": "🦎", "ヤモリ": "🦎", "リクガメ": "🐢", "モルモット": "🐹", "チンチラ": "🐭", "フェレット": "🦦", "ハツカネズミ": "🐁", "スズメ": "🐦", "金魚": "🐟", "コイ": "🐟", "メダカ": "🐟", "ドジョウ": "🐟", "ザリガニ": "🦞", "サワガニ": "🦀", "ヤドカリ": "🐚", "アサリ": "🐚", "シジミ": "🐚", "カタツムリ": "🐌", "ナメクジ": "🐌", "ミミズ": "🪱", "シロアリ": "🐜", "アブラムシ": "🐛", "ガ": "🦋", "ミツバチ": "🐝", "アシナガバチ": "🐝", "ハエ": "🪰", "カ": "🦟", "ゴキブリ": "🪳", "ノミ": "🐛", "ダニ": "🕷️", "バッタ": "🦗", "コオロギ": "🦗", "スズムシ": "🦗", "セミ": "🦗", "ホタル": "🔦", "アメンボ": "🦟", "ゲンゴロウ": "🪲", "タガメ": "🪲", "ミズカマキリ": "🦗", "ゾウリムシ": "🦠", "ミジンコ": "🦠", "アメーバ": "🦠", "プラナリア": "🪱", "クリオネ": "🧚", "クラゲ": "🪼", "ヒトデ": "⭐", "ウニ": "🦔", "ナマコ": "🥒", "フグ": "🐡", "イワシ": "🐟", "アジ": "🐟", "サバ": "🐟", "サンマ": "🐟", "タイ": "🐟", "マグロ": "🐟", "サケ": "🐟", "ラーテル": "🦡", "クズリ": "🦡", "タスマニアデビル": "👿", "マンドリル": "🐒"
-        };
-
-        const getEmoji = (name) => {
-            for (const [key, emoji] of Object.entries(ANIMAL_EMOJIS)) {
-                if (name.includes(key)) return emoji;
-            }
-            return "🐾";
         };
 
         const RARITY_CONFIG = {
@@ -124,7 +122,7 @@
         ];
 
         const POTION_TYPES = [
-            { id: 'LIFE_AWAKENING', name: '命覚醒ポーション', duration: 180 * 60 * 1000, desc: '指定カードを3時間覚醒(HP/ATK 2倍)させる。効果終了後、そのカードは消滅する。', type: 'CARD_BUFF', costType: 'CARD', costAmount: 5, multiplier: 2.0 },
+            { id: 'LIFE_AWAKENING', name: '命覚醒ポーション', duration: 180 * 60 * 1000, desc: '3時間、全ステータス3倍！(代償: 対象1枚＋同レア2枚)', type: 'CARD_BUFF', costType: 'CARD', costAmount: 5, multiplier: 3.0 },
             { id: 'RICH', name: '富豪のポーション', duration: 60 * 60 * 1000, desc: '1時間、獲得コイン2倍', type: 'COIN_BUFF', costType: 'COIN', costAmount: 2000, multiplier: 2.0 },
             { id: 'FOCUS', name: '集中力の秘薬', duration: 30 * 60 * 1000, desc: '30分、ミニゲームが簡単になる。', type: 'SLOW_BUFF', costType: 'COIN', costAmount: 1000, multiplier: 1.0 },
         ];
@@ -167,14 +165,39 @@
             { id: 'm6', text: 'バトルを3回行う', target: 3, reward: 800, type: 'BATTLE_COUNT' },
         ];
 
-        // --- UI COMPONENTS ---
+        const getEmoji = (name) => {
+            for (const [key, emoji] of Object.entries(ANIMAL_EMOJIS)) {
+                if (name.includes(key)) return emoji;
+            }
+            return "🐾";
+        };
+
+        // ==========================================
+        // 3. BASIC COMPONENTS
+        // ==========================================
+
+        const Button = ({ children, onClick, variant = "primary", disabled = false, className = "", size="normal" }) => {
+            const baseStyle = "rounded-lg font-bold transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale";
+            const sizeStyles = size === "small" ? "px-2 py-1 text-xs" : "px-4 py-3 text-sm md:text-base";
+            const variants = {
+                primary: "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white shadow-lg shadow-blue-900/30",
+                secondary: "bg-gray-700 hover:bg-gray-600 text-white border border-gray-600",
+                gold: "bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-white shadow-lg shadow-yellow-900/30",
+                danger: "bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/30",
+                green: "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/30",
+                purple: "bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/30"
+            };
+            return (
+                <button onClick={onClick} disabled={disabled} className={`${baseStyle} ${sizeStyles} ${variants[variant]} ${className}`}>{children}</button>
+            );
+        };
 
         const Card = ({ card, isNew, size = "normal", showPower = true, isHidden = false, onClick, className = "", isRental = false, isSelected = false, level = 0, variantId = 1, isAwakened = false }) => {
             if (!card) return <div className="w-24 h-36 bg-gray-800 rounded-lg animate-pulse"></div>;
             
             const variant = VARIANT_CONFIG[variantId] || VARIANT_CONFIG[1];
             const levelMultiplier = 1 + (level * 0.1);
-            const awakenedMult = isAwakened ? 2.0 : 1.0;
+            const awakenedMult = isAwakened ? 3.0 : 1.0;
             const displayPower = Math.floor(card.power * levelMultiplier * variant.powMod * awakenedMult);
             const displayHp = Math.floor(card.hp * levelMultiplier * variant.hpMod * awakenedMult);
 
@@ -199,7 +222,7 @@
             const displayName = card.name + (variant.id !== 1 ? ` ${variant.suffix}` : "");
 
             return (
-                <div onClick={onClick} className={`relative rounded-xl p-0.5 transition-all duration-300 transform ${onClick ? 'cursor-pointer active:scale-95' : ''} ${variantRing} ${bgGradient} shadow-lg ${className} ${isSelected ? "ring-4 ring-green-500" : ""} ${isAwakened ? "ring-4 ring-red-500 animate-pulse-red" : ""}`}>
+                <div onClick={onClick} className={`relative rounded-xl p-0.5 transition-all duration-300 transform ${onClick ? 'cursor-pointer active:scale-95' : ''} ${variantRing} ${bgGradient} shadow-lg ${className} ${isSelected ? "ring-4 ring-green-500 z-10 scale-105" : ""} ${isAwakened ? "ring-4 ring-red-500 animate-pulse-red" : ""}`}>
                     <div className={`h-full w-full bg-gray-900 rounded-lg overflow-hidden flex flex-col relative ${dimClass}`}>
                         <div className="absolute inset-0 bg-gray-800 opacity-50" style={{backgroundImage: 'radial-gradient(#ffffff10 1px, transparent 1px)', backgroundSize: '10px 10px'}}></div>
                         {isHolo && <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent animate-[shimmer_3s_infinite] pointer-events-none" style={{backgroundSize: '200% 100%'}} />}
@@ -210,30 +233,14 @@
                         <div className={`flex-1 flex items-center justify-center z-10 ${emojiSize} filter drop-shadow-lg ${variant.id===6?'grayscale opacity-70':''} ${card.rarity === 'SECRET_GOD' ? 'glitch-text' : ''}`}>{emoji}</div>
                         <div className="relative z-10 w-full p-1.5 text-center bg-gradient-to-t from-black/90 to-transparent">
                             <h3 className={`${titleSize} font-bold text-white mb-1 leading-tight line-clamp-2 min-h-[2.4em] flex items-center justify-center drop-shadow-md ${variant.id === 2 ? 'variant-text-secret' : ''}`}>{displayName}</h3>
-                            {showPower && <div className="flex justify-between gap-1 text-[9px] font-mono text-white bg-black/60 rounded px-1 py-0.5 backdrop-blur-sm border border-white/10"><span className="text-green-400">H{displayHp}</span><span className="text-red-400">A{displayPower}</span></div>}
+                            {showPower && <div className="flex justify-between gap-1 text-[9px] font-mono text-white bg-black/60 rounded px-1 py-0.5 backdrop-blur-sm border border-white/10"><span className="text-green-400">H{displayHp}</span><span className={`font-black ${isAwakened ? 'text-red-500 animate-pulse' : 'text-red-400'}`}>A{displayPower}</span></div>}
                         </div>
                         {isNew && <div className="absolute top-3 -right-8 bg-red-600 text-white text-[8px] font-bold px-8 py-0.5 rotate-45 shadow-lg z-20">NEW</div>}
                         {isRental && <div className="absolute top-3 -left-8 bg-blue-600 text-white text-[8px] font-bold px-8 py-0.5 -rotate-45 shadow-lg z-20">RENTAL</div>}
-                        {isAwakened && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 font-black text-2xl opacity-50 pointer-events-none rotate-12 border-4 border-red-500 rounded p-1">覚醒</div>}
+                        {isAwakened && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 font-black text-2xl opacity-60 pointer-events-none rotate-12 border-4 border-red-500 rounded p-1 whitespace-nowrap z-20">覚醒 x3</div>}
                         {isSelected && <div className="absolute inset-0 bg-green-500/30 z-30 flex items-center justify-center"><Icons.CheckCircle size={32} className="text-white drop-shadow-lg"/></div>}
                     </div>
                 </div>
-            );
-        };
-
-        const Button = ({ children, onClick, variant = "primary", disabled = false, className = "", size="normal" }) => {
-            const baseStyle = "rounded-lg font-bold transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale";
-            const sizeStyles = size === "small" ? "px-2 py-1 text-xs" : "px-4 py-3 text-sm md:text-base";
-            const variants = {
-                primary: "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white shadow-lg shadow-blue-900/30",
-                secondary: "bg-gray-700 hover:bg-gray-600 text-white border border-gray-600",
-                gold: "bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-white shadow-lg shadow-yellow-900/30",
-                danger: "bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/30",
-                green: "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/30",
-                purple: "bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/30"
-            };
-            return (
-                <button onClick={onClick} disabled={disabled} className={`${baseStyle} ${sizeStyles} ${variants[variant]} ${className}`}>{children}</button>
             );
         };
 
@@ -247,6 +254,10 @@
                 </div>
             );
         };
+
+        // ==========================================
+        // 4. GAME SUB COMPONENTS
+        // ==========================================
 
         const PackOpener = ({ onOpen, packType }) => {
             const [cutProgress, setCutProgress] = useState(0);
@@ -393,7 +404,13 @@
             );
         };
 
-        // --- MAIN APP ---
+        const TheLane = ({ onBuy, coins }) => {
+            return null;
+        };
+
+        // ==========================================
+        // 5. MAIN APP
+        // ==========================================
 
         function AnimalChronicle() {
             const [coins, setCoins] = useState(1000);
@@ -424,6 +441,9 @@
             const [awakenedCards, setAwakenedCards] = useState([]); 
             const [activeBuffs, setActiveBuffs] = useState({}); 
             const [potionTargetSelection, setPotionTargetSelection] = useState(false); 
+            const [potionBaseCard, setPotionBaseCard] = useState(null); 
+            const [potionSacrifices, setPotionSacrifices] = useState([]); 
+            const [showRitualModal, setShowRitualModal] = useState(false); // New modal trigger
 
             // Event
             const [currentEvent, setCurrentEvent] = useState(null);
@@ -441,17 +461,14 @@
             const ITEMS_PER_PAGE_DECK = 10; 
 
             useEffect(() => {
-                let saved = localStorage.getItem('animalChronicleData_v3_4_1'); // Updated key
-                if (!saved) saved = localStorage.getItem('animalChronicleData_v3_4');
-                if (!saved) saved = localStorage.getItem('animalChronicleData_v3_3');
-                if (!saved) saved = localStorage.getItem('animalChronicleData_v3_2');
+                let saved = localStorage.getItem('animalChronicleData_v3_6_0'); 
+                if (!saved) saved = localStorage.getItem('animalChronicleData_v3_5_3'); 
+                if (!saved) saved = localStorage.getItem('animalChronicleData_v3_5_2'); 
 
                 let lastLoginDate = "";
                 if (saved) {
                     try {
                         const parsed = JSON.parse(saved);
-                        
-                        // NaN Check and Repair
                         let loadedCoins = Number(parsed.coins);
                         if (isNaN(loadedCoins) || loadedCoins === null) loadedCoins = 1000;
                         setCoins(loadedCoins);
@@ -493,7 +510,7 @@
 
             useEffect(() => {
                 const today = new Date().toLocaleDateString('ja-JP');
-                localStorage.setItem('animalChronicleData_v3_4_1', JSON.stringify({
+                localStorage.setItem('animalChronicleData_v3_6_0', JSON.stringify({
                     coins, playerRank, collection, cardLevels, lastFreePackClaim, lastDailyReset, activeMissions, missionProgress, claimedMissions, lastLoginDate: today, idleRewards: { ...idleRewards, lastCheck: Date.now() },
                     awakenedCards, activeBuffs
                 }));
@@ -700,8 +717,11 @@
             const handlePotionBuy = (potion) => {
                 if (potion.costType === 'CARD') {
                     setPotionTargetSelection(true);
+                    setPotionBaseCard(null);
+                    setPotionSacrifices([]);
+                    setShowRitualModal(false);
                     setView('COLLECTION');
-                    alert("命覚醒させるカードをコレクションから選択してください。\n※選択したカード1枚が消費され、3時間限定の強化個体に生まれ変わります。");
+                    alert("【命覚醒の儀式】\nベースカード1枚と、同じレアリティの生贄カード2枚を選択してください。");
                 } else {
                     if (activeBuffs[potion.id] && activeBuffs[potion.id] > Date.now()) {
                         alert("すでに効果が発動しています！");
@@ -722,23 +742,107 @@
                 if (!potionTargetSelection) return;
                 
                 const key = `${card.id}_${card.variantId}`;
-                if (collection[key] < 1) return;
-
-                if (!confirm(`${card.name} に命覚醒ポーションを使用しますか？\n\n【警告】\nこのカード1枚を消費し、3時間限定の強力な個体を生成します。\n効果終了後、生成された個体は消滅します。（元のカードは戻りません）`)) return;
-
-                setCollection(prev => ({ ...prev, [key]: prev[key] - 1 }));
                 
+                // Step 1: Select Base Card
+                if (!potionBaseCard) {
+                    if (collection[key] < 1) return;
+                    setPotionBaseCard(card);
+                    return;
+                }
+
+                // Step 2: Select Sacrifices
+                // ベースカード自体はクリックしても無視（解除不可）
+                if (potionBaseCard.id === card.id && potionBaseCard.variantId === card.variantId) {
+                    return;
+                }
+
+                // レアリティ違いは選べない
+                if (card.rarity !== potionBaseCard.rarity) {
+                    alert(`ベースカード(${potionBaseCard.rarity})と同じレアリティのカードを選んでください！`);
+                    return;
+                }
+
+                // 既に選択されているかチェック（トグル処理）
+                const isSelected = potionSacrifices.some(s => s.id === card.id && s.variantId === card.variantId);
+
+                if (isSelected) {
+                    // 選択解除
+                    setPotionSacrifices(prev => prev.filter(s => !(s.id === card.id && s.variantId === card.variantId)));
+                } else {
+                    // 新規選択
+                    if (potionSacrifices.length >= 2) {
+                        alert("生贄は2枚までです。先に選択済みのカードをタップして解除してください。");
+                        return;
+                    }
+                    
+                    // 枚数チェック
+                    let requiredCount = 1; // 今回選択する分
+
+                    // ベースカードと同じカードなら、ベース分も必要
+                    if (potionBaseCard.id === card.id && potionBaseCard.variantId === card.variantId) {
+                        requiredCount++;
+                    }
+
+                    // 既に生贄として選択されている同じカードの分も必要
+                    potionSacrifices.forEach(s => {
+                        if (s.id === card.id && s.variantId === card.variantId) {
+                            requiredCount++;
+                        }
+                    });
+
+                    if (collection[key] < requiredCount) {
+                        alert(`カードの所持枚数が足りません！\n(所持: ${collection[key]}枚, 必要: ${requiredCount}枚)`);
+                        return;
+                    }
+
+                    // 2枚目を選択した瞬間、モーダルを表示する
+                    const newSacrifices = [...potionSacrifices, card];
+                    setPotionSacrifices(newSacrifices);
+                    
+                    if (newSacrifices.length === 2) {
+                        setShowRitualModal(true);
+                    }
+                }
+            };
+
+            const executeLifeAwakening = () => {
+                const base = potionBaseCard;
+                const sacrifices = potionSacrifices;
+
+                if (!base || sacrifices.length !== 2) return;
+
+                const newCollection = { ...collection };
+                
+                // Consume Base
+                const baseKey = `${base.id}_${base.variantId}`;
+                newCollection[baseKey]--;
+                
+                // Consume Sacrifices
+                sacrifices.forEach(s => {
+                    const sKey = `${s.id}_${s.variantId}`;
+                    newCollection[sKey]--;
+                });
+                
+                setCollection(newCollection);
+
                 const awakened = {
-                    ...card,
+                    ...base,
                     uniqueId: Date.now(), 
                     expiresAt: Date.now() + (3 * 60 * 60 * 1000), 
-                    isAwakened: true
+                    isAwakened: true,
+                    // 重要: パワーなどの基本値もここで明示的に持たせるが、Cardコンポーネント側で再計算されるのでフラグが重要
+                    // ただし、レベル情報は引き継ぐ
+                    level: cardLevels[base.id] || 0
                 };
-                setAwakenedCards(prev => [...prev, awakened]);
-                
+                setAwakenedCards(prev => [awakened, ...prev]);
+
                 setPotionTargetSelection(false);
-                setView('SHOP');
-                alert("命覚醒に成功しました！\nデッキ選択画面で編成可能です。");
+                setPotionBaseCard(null);
+                setPotionSacrifices([]);
+                setShowRitualModal(false);
+                setView('COLLECTION');
+                setCollectionPage(0); // 覚醒カードを見るためにページトップへ
+                alert("儀式成功！\n超・命覚醒したカードが生成されました！\nコレクションの一番上に表示されます。");
             };
 
             const startRankBattle = () => { confirmDeckAndStart(true); };
@@ -750,7 +854,7 @@
                     const level = cardLevels[c.id] || 0;
                     const variant = VARIANT_CONFIG[c.variantId];
                     const mult = 1 + (level * 0.1);
-                    const awakenedMult = c.isAwakened ? 2.0 : 1.0;
+                    const awakenedMult = c.isAwakened ? 3.0 : 1.0; 
                     return { 
                         ...c, 
                         hp: Math.floor(c.hp * mult * variant.hpMod * awakenedMult * (isRank ? 10 : 2)), 
@@ -964,6 +1068,11 @@
             const renderDeckSelect = () => {
                 let myCards = []; 
                 
+                // Awakened Cards
+                awakenedCards.forEach(c => {
+                    myCards.push({ ...c, isAwakened: true });
+                });
+
                 // Normal Cards
                 Object.keys(collection).forEach(key => {
                     if (collection[key] > 0) {
@@ -975,11 +1084,6 @@
                         }
                     }
                 });
-
-                // Awakened Cards
-                awakenedCards.forEach(c => {
-                    myCards.push({ ...c, isAwakened: true });
-                });
                 
                 if (deckFilter !== 'ALL') {
                     myCards = myCards.filter(c => c.variantId.toString() === deckFilter);
@@ -989,7 +1093,7 @@
                     const getPower = (c) => {
                          const variant = VARIANT_CONFIG[c.variantId] || VARIANT_CONFIG[1];
                          const level = cardLevels[c.id] || 0;
-                         const awake = c.isAwakened ? 2.0 : 1.0;
+                         const awake = c.isAwakened ? 3.0 : 1.0; 
                          return Math.floor(c.power * (1 + level * 0.1) * variant.powMod * awake);
                     };
 
@@ -1006,7 +1110,7 @@
                 const paginatedCards = myCards.slice(deckSelectPage * ITEMS_PER_PAGE_DECK, (deckSelectPage + 1) * ITEMS_PER_PAGE_DECK);
 
                  return (
-                     <div className="flex flex-col h-full animate-in fade-in">
+                      <div className="flex flex-col h-full animate-in fade-in">
                         <div className="flex justify-between items-center mb-2 shrink-0">
                             <Button onClick={() => setView('HOME')} variant="secondary" size="small"><Icons.Home size={16}/> 戻る</Button>
                             <h2 className="text-lg font-bold text-white">出撃デッキ選択</h2>
@@ -1048,7 +1152,6 @@
                             ) : (
                                 <div className="grid grid-cols-3 gap-2">
                                     {paginatedCards.map((card, idx) => {
-                                        // Simple dedupe check logic needs to be robust for awakened cards which are unique objects
                                         const isSelected = selectedDeck.some(c => 
                                             (c.isAwakened && card.isAwakened && c.uniqueId === card.uniqueId) || 
                                             (!c.isAwakened && !card.isAwakened && c.id === card.id && c.variantId === card.variantId)
@@ -1148,19 +1251,108 @@
 
             const renderCollection = () => {
                  const cards = filteredCollectionCards.slice(collectionPage*10, (collectionPage+1)*10);
+                 
+                 // 儀式中用のUI
+                 if (potionTargetSelection) {
+                     return (
+                         <div className="flex flex-col h-full">
+                            {/* 儀式ステータスヘッダー */}
+                            <div className="bg-gray-900 border-b border-gray-700 p-2 shrink-0 z-20">
+                                <div className="flex justify-between items-center mb-2">
+                                     <Button onClick={()=>setView('SHOP')} size="small" variant="secondary"><Icons.ChevronLeft size={16}/> キャンセル</Button>
+                                     <div className="text-red-400 font-bold text-sm animate-pulse">命覚醒の儀式</div>
+                                </div>
+                                <div className="bg-red-900/40 p-2 rounded border border-red-500/50 text-center">
+                                    {potionBaseCard ? (
+                                        <div className="flex items-center justify-center gap-4">
+                                            <div className="flex flex-col items-center">
+                                                <div className="text-[10px] text-red-200">ベース</div>
+                                                <div className="text-sm font-bold">{potionBaseCard.name}</div>
+                                            </div>
+                                            <div className="text-2xl text-red-500">→</div>
+                                            <div className="flex flex-col items-center">
+                                                <div className="text-[10px] text-red-200">生贄選択</div>
+                                                <div className="text-xl font-black text-white">{potionSacrifices.length} / 2</div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="text-sm text-white">覚醒させるベースカードを選択してください</div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto grid grid-cols-2 gap-2 pb-32 p-2">
+                                {cards.map((c,i)=> {
+                                    const isBase = potionTargetSelection && potionBaseCard && potionBaseCard.id === c.id && potionBaseCard.variantId === c.variantId;
+                                    const isSacrifice = potionTargetSelection && potionSacrifices.some(s => s.id === c.id && s.variantId === c.variantId);
+                                    
+                                    let opacityClass = '';
+                                    if (potionTargetSelection && potionBaseCard) {
+                                        if (c.rarity !== potionBaseCard.rarity) opacityClass = 'opacity-30 grayscale';
+                                    }
+
+                                    return (
+                                    <div key={i} onClick={() => potionTargetSelection ? handleCardSelectionForPotion(c) : setSelectedCard(c)} className={`relative ${opacityClass}`}>
+                                         <Card card={c} size="small" variantId={c.variantId} level={cardLevels[c.id]||0}/>
+                                         <div className="text-right text-xs">x{collection[`${c.id}_${c.variantId}`]}</div>
+                                         
+                                         {isBase && (
+                                             <div className="absolute inset-0 bg-yellow-500/30 flex items-center justify-center font-bold text-yellow-200 pointer-events-none border-4 border-yellow-400 rounded-xl z-20 text-shadow text-xl">BASE</div>
+                                         )}
+                                         {isSacrifice && (
+                                             <div className="absolute inset-0 bg-red-900/60 flex items-center justify-center font-bold text-red-200 pointer-events-none border-4 border-red-600 rounded-xl z-20 text-shadow text-xl">SACRIFICE</div>
+                                         )}
+                                    </div>
+                                    );
+                                })}
+                            </div>
+                            <div className="mb-24"><PaginationControls page={collectionPage} totalPages={Math.ceil(filteredCollectionCards.length/10)} onPrev={()=>setCollectionPage(p=>Math.max(0,p-1))} onNext={()=>setCollectionPage(p=>Math.min(totalPages-1,p+1))} /></div>
+                         </div>
+                     )
+                 }
+
                  return (
                      <div className="flex flex-col h-full">
-                         <div className="flex justify-between mb-2"><Button onClick={()=>setView('HOME')} size="small" variant="secondary"><Icons.Home size={16}/> 戻る</Button><div>Collection ({Object.values(collection).reduce((a,b)=>a+b,0)}枚)</div></div>
-                         <div className="flex-1 overflow-y-auto grid grid-cols-2 gap-2 pb-32">{cards.map((c,i)=><div key={i} onClick={()=>setSelectedCard(c)}><Card card={c} size="small" variantId={c.variantId} level={cardLevels[c.id]||0}/><div className="text-right text-xs">x{collection[`${c.id}_${c.variantId}`]}</div></div>)}</div>
-                         <div className="mb-24"><PaginationControls page={collectionPage} totalPages={Math.ceil(filteredCollectionCards.length/10)} onPrev={()=>setCollectionPage(p=>p-1)} onNext={()=>setCollectionPage(p=>p+1)} /></div>
+                         <div className="flex justify-between mb-2 shrink-0">
+                             <Button onClick={()=>setView('HOME')} size="small" variant="secondary"><Icons.Home size={16}/> 戻る</Button>
+                             <div>Collection ({Object.values(collection).reduce((a,b)=>a+b,0)}枚)</div>
+                         </div>
+
+                         <div className="flex-1 overflow-y-auto pb-32 p-1">
+                            {/* Awakened Cards Section */}
+                            {awakenedCards.length > 0 && (
+                                <div className="mb-4">
+                                    <h3 className="text-red-400 font-bold mb-2 border-b border-red-900 pb-1">覚醒中のカード (残り時間あり)</h3>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {awakenedCards.map((c, i) => (
+                                            <div key={`awk-${i}`} onClick={() => setSelectedCard({...c, isAwakened: true})}>
+                                                <Card card={c} size="small" isAwakened={true} variantId={c.variantId} level={cardLevels[c.id]||0} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                             <div className="grid grid-cols-2 gap-2">
+                                 {cards.map((c,i)=> (
+                                    <div key={i} onClick={() => setSelectedCard(c)}>
+                                         <Card card={c} size="small" variantId={c.variantId} level={cardLevels[c.id]||0}/>
+                                         <div className="text-right text-xs">所持: {collection[`${c.id}_${c.variantId}`]}</div>
+                                    </div>
+                                 ))}
+                             </div>
+                             <div className="mt-4"><PaginationControls page={collectionPage} totalPages={Math.ceil(filteredCollectionCards.length/10)} onPrev={()=>setCollectionPage(p=>Math.max(0,p-1))} onNext={()=>setCollectionPage(p=>Math.min(totalPages-1,p+1))} /></div>
+                         </div>
                      </div>
                  );
             };
             
             const renderBattleView = () => {
                 if (!battleState) return null;
-                if (isBattleTiming) return <BattleTimer onComplete={resolveAttack} />;
-                if (isSlotBattle) return <SlotMachine onResult={resolveAttack} />;
+                const difficulty = (activeBuffs['FOCUS'] && activeBuffs['FOCUS'] > Date.now()) ? 2.0 : 1.0;
+
+                if (isBattleTiming) return <BattleTimer onComplete={resolveAttack} difficulty={difficulty} />;
+                if (isSlotBattle) return <SlotMachine onResult={resolveAttack} difficulty={difficulty} />;
                 if (battleState.finished) return (
                     <div className="flex flex-col items-center justify-center h-full space-y-6 animate-in zoom-in">
                         <h2 className={`text-5xl font-black ${battleState.won ? 'text-yellow-400' : 'text-gray-500'}`}>{battleState.won ? 'VICTORY' : 'DEFEAT'}</h2>
@@ -1198,7 +1390,7 @@
                     <div className="relative z-20 bg-gray-900/80 p-2 flex justify-between items-center backdrop-blur-sm border-b border-gray-700">
                         <div className="text-yellow-400 font-bold flex items-center gap-2 text-lg"><Icons.Coins /> {coins} G</div>
                         <div className="text-white font-mono bg-blue-900/50 px-2 rounded">RANK: {playerRank}</div>
-                        <div className="text-xs text-gray-400">Ver 3.4.1</div>
+                        <div className="text-xs text-gray-400">Ver 3.6.0</div>
                     </div>
 
                     <div className="relative z-10 flex-1 p-4 overflow-hidden">
@@ -1210,32 +1402,60 @@
                         {view === 'SHOP' && renderShop()}
                     </div>
 
-                    {/* Modal */}
-                    {selectedCard && (
+                    {/* Card Detail Modal */}
+                    {selectedCard && !potionTargetSelection && (
                         <div className="fixed inset-0 bg-black/90 z-[9999] flex flex-col items-center justify-center p-4" onClick={() => setSelectedCard(null)}>
                              <div className="bg-gray-800 p-4 rounded-xl" onClick={e=>e.stopPropagation()}>
-                                 <Card card={selectedCard} showPower={true} level={cardLevels[selectedCard.id]||0} variantId={selectedCard.variantId}/>
-                                 <div className="mt-4 flex gap-2">
-                                     <Button onClick={() => {
-                                         const key = `${selectedCard.id}_${selectedCard.variantId}`;
-                                         if(collection[key]>=2) {
-                                             if(confirm("2枚消費して覚醒しますか？(1枚消費してレベルアップ)")) {
-                                                 setCollection(p=>({...p, [key]: p[key]-1}));
-                                                 setCardLevels(p=>({...p, [selectedCard.id]: (p[selectedCard.id]||0)+1}));
-                                                 setSelectedCard(null);
+                                 <Card card={selectedCard} showPower={true} level={cardLevels[selectedCard.id]||0} variantId={selectedCard.variantId} isAwakened={selectedCard.isAwakened}/>
+                                 {!selectedCard.isAwakened && (
+                                     <div className="mt-4 flex gap-2 justify-center">
+                                         <Button onClick={() => {
+                                             const key = `${selectedCard.id}_${selectedCard.variantId}`;
+                                             if(collection[key]>=2) {
+                                                 if(confirm("2枚消費してレベルアップしますか？")) {
+                                                     setCollection(p=>({...p, [key]: p[key]-1}));
+                                                     setCardLevels(p=>({...p, [selectedCard.id]: (p[selectedCard.id]||0)+1}));
+                                                     setSelectedCard(null);
+                                                 }
+                                             } else alert("カードが足りません(2枚必要)");
+                                         }} variant="gold" size="small">強化(1枚消費)</Button>
+                                         <Button onClick={()=>{
+                                             const key = `${selectedCard.id}_${selectedCard.variantId}`;
+                                             if(collection[key]>0) {
+                                                  if(confirm("売却しますか？")) {
+                                                      setCollection(p=>({...p, [key]: p[key]-1}));
+                                                      setCoins(c=>c+100); 
+                                                      setSelectedCard(null);
+                                                  }
                                              }
-                                         } else alert("カードが足りません(2枚必要)");
-                                     }} variant="gold" size="small">覚醒(1枚消費)</Button>
-                                     <Button onClick={()=>{
-                                         const key = `${selectedCard.id}_${selectedCard.variantId}`;
-                                         if(collection[key]>0) {
-                                              if(confirm("売却しますか？")) {
-                                                  setCollection(p=>({...p, [key]: p[key]-1}));
-                                                  setCoins(c=>c+100); 
-                                                  setSelectedCard(null);
-                                              }
-                                         }
-                                     }} variant="secondary" size="small">売却</Button>
+                                         }} variant="secondary" size="small">売却</Button>
+                                     </div>
+                                 )}
+                                 {selectedCard.isAwakened && <div className="text-center mt-2 text-red-400 text-xs">このカードは覚醒中です</div>}
+                             </div>
+                        </div>
+                    )}
+
+                    {/* Ritual Confirmation Modal (Center Pop-up) */}
+                    {showRitualModal && potionBaseCard && (
+                        <div className="fixed inset-0 bg-black/90 z-[10000] flex flex-col items-center justify-center p-4 animate-in zoom-in duration-200">
+                             <div className="bg-gradient-to-br from-red-900 to-black p-6 rounded-2xl border-4 border-red-500 shadow-[0_0_50px_rgba(220,38,38,0.5)] max-w-sm w-full text-center relative overflow-hidden">
+                                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] opacity-10"></div>
+                                 <h3 className="text-2xl font-black text-white mb-2 relative z-10 text-shadow">儀式の準備完了</h3>
+                                 <p className="text-red-200 mb-6 text-sm relative z-10">以下のカードを消費して、<br/>強力な覚醒個体を生成しますか？</p>
+                                 
+                                 <div className="flex justify-center items-center gap-2 mb-6 relative z-10">
+                                     <div className="scale-75"><Card card={potionBaseCard} size="small" variantId={potionBaseCard.variantId} level={cardLevels[potionBaseCard.id]||0}/></div>
+                                     <div className="text-4xl text-white font-bold">→</div>
+                                     <div className="scale-90 relative">
+                                         <Card card={potionBaseCard} size="small" variantId={potionBaseCard.variantId} isAwakened={true} level={cardLevels[potionBaseCard.id]||0}/>
+                                         <div className="absolute -top-4 -right-4 bg-yellow-400 text-black font-black rounded-full w-12 h-12 flex items-center justify-center border-4 border-white shadow-lg animate-bounce">x3</div>
+                                     </div>
+                                 </div>
+                                 
+                                 <div className="space-y-3 relative z-10">
+                                     <Button onClick={executeLifeAwakening} variant="danger" className="w-full py-4 text-xl font-black shadow-xl ring-2 ring-white/50">儀式を実行する！</Button>
+                                     <Button onClick={() => setShowRitualModal(false)} variant="secondary" className="w-full">キャンセル</Button>
                                  </div>
                              </div>
                         </div>
